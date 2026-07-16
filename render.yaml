@@ -4,6 +4,7 @@ databases:
     user: reviewsense_user
     plan: starter
     region: ohio
+    ipAllowList: []
 
 services:
   # Redis Instance
@@ -11,6 +12,7 @@ services:
     name: reviewsense-redis
     plan: starter
     region: ohio
+    ipAllowList: []
 
   # FastAPI Backend Web Service
   - type: web
