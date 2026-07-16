@@ -1,13 +1,11 @@
-services:
-  # PostgreSQL Database
-  - type: pserv
-    name: reviewsense-db
-    env: postgres
-    plan: starter
-    region: ohio
+databases:
+  - name: reviewsense-db
     databaseName: reviewsense
     user: reviewsense_user
+    plan: starter
+    region: ohio
 
+services:
   # Redis Instance
   - type: redis
     name: reviewsense-redis
