@@ -25,11 +25,31 @@ class Base(DeclarativeBase):
 # Normalize DATABASE_URL for async driver compatibility
 # Render (and many providers) supply postgres:// or postgresql:// URLs,
 # but SQLAlchemy async requires the postgresql+asyncpg:// scheme.
+# Additionally, asyncpg does not accept 'sslmode' — it uses 'ssl' instead.
+import ssl as _ssl_module
+
 _db_url = settings.DATABASE_URL
 if _db_url.startswith("postgres://"):
     _db_url = _db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif _db_url.startswith("postgresql://"):
     _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Detect if SSL is required, then strip sslmode from URL (asyncpg doesn't support it)
+_use_ssl = "sslmode=" in _db_url
+_db_url = _db_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
+_db_url = _db_url.replace("?sslmode=prefer", "").replace("&sslmode=prefer", "")
+_db_url = _db_url.replace("?sslmode=verify-full", "").replace("&sslmode=verify-full", "")
+# Clean up trailing ? if we stripped the only query param
+if _db_url.endswith("?"):
+    _db_url = _db_url[:-1]
+
+# Build connect_args for SSL if needed
+_connect_args = {}
+if _use_ssl:
+    _ssl_ctx = _ssl_module.create_default_context()
+    _ssl_ctx.check_hostname = False
+    _ssl_ctx.verify_mode = _ssl_module.CERT_NONE
+    _connect_args["ssl"] = _ssl_ctx
 
 # Create async engine with pre-ping to verify connection health
 # Optimize pool sizes for production load
@@ -40,6 +60,7 @@ engine = create_async_engine(
     max_overflow=20,
     pool_timeout=30,
     echo=False,
+    connect_args=_connect_args,
 )
 
 
