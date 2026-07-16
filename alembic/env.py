@@ -24,7 +24,12 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+_db_url = settings.DATABASE_URL
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+config.set_main_option("sqlalchemy.url", _db_url)
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")

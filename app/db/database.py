@@ -22,10 +22,19 @@ class Base(DeclarativeBase):
     pass
 
 
+# Normalize DATABASE_URL for async driver compatibility
+# Render (and many providers) supply postgres:// or postgresql:// URLs,
+# but SQLAlchemy async requires the postgresql+asyncpg:// scheme.
+_db_url = settings.DATABASE_URL
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # Create async engine with pre-ping to verify connection health
 # Optimize pool sizes for production load
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    _db_url,
     pool_pre_ping=True,
     pool_size=50,
     max_overflow=20,
