@@ -1,6 +1,8 @@
-from typing import List, Dict, Any
-from app.services.quality.quality_models import QualityIssue
 import re
+from typing import Any, Dict, List
+
+from app.services.quality.quality_models import QualityIssue
+
 
 class ComplexityAnalyzer:
     def __init__(self):
@@ -24,9 +26,9 @@ class ComplexityAnalyzer:
             name = func.get("name", "anonymous")
             start_line = func.get("start_point", [0])[0] + 1
             body = func.get("body", "")
-            lines = body.split('\\n')
+            lines = body.split("\\n")
             length = len(lines)
-            
+
             # Function Length
             if length > self.max_function_length:
                 issues.append(
@@ -38,12 +40,12 @@ class ComplexityAnalyzer:
                         title="Function is too long",
                         description=f"Function '{name}' is {length} lines long, exceeding the limit of {self.max_function_length}.",
                         recommendation="Break the function down into smaller, focused helper methods.",
-                        confidence="high"
+                        confidence="high",
                     )
                 )
 
             # Return Count
-            return_count = len(re.findall(r'\breturn\b', body))
+            return_count = len(re.findall(r"\breturn\b", body))
             if return_count > self.max_return_count:
                 issues.append(
                     QualityIssue(
@@ -54,12 +56,12 @@ class ComplexityAnalyzer:
                         title="Too many return statements",
                         description=f"Function '{name}' has {return_count} return statements.",
                         recommendation="Refactor the logic to have a more unified exit path or extract early returns into separate functions.",
-                        confidence="high"
+                        confidence="high",
                     )
                 )
-                
+
             # Cyclomatic Complexity Approximation
-            branches = len(re.findall(r'\b(if|elif|else|for|while|case|catch)\b', body))
+            branches = len(re.findall(r"\b(if|elif|else|for|while|case|catch)\b", body))
             complexity = 1 + branches
             if complexity > self.max_cyclomatic_complexity:
                 issues.append(
@@ -71,16 +73,22 @@ class ComplexityAnalyzer:
                         title="High Cyclomatic Complexity",
                         description=f"Function '{name}' has an estimated cyclomatic complexity of {complexity}.",
                         recommendation="Simplify the logic, avoid deep nesting, and extract complex conditional blocks.",
-                        confidence="medium"
+                        confidence="medium",
                     )
                 )
-                
+
             # Parameters Check (approximate by searching first line)
             if lines:
                 first_line = lines[0]
-                if '(' in first_line and ')' in first_line:
-                    params_str = first_line[first_line.find('(')+1 : first_line.find(')')]
-                    params = [p for p in params_str.split(',') if p.strip() and p.strip() != 'self']
+                if "(" in first_line and ")" in first_line:
+                    params_str = first_line[
+                        first_line.find("(") + 1 : first_line.find(")")
+                    ]
+                    params = [
+                        p
+                        for p in params_str.split(",")
+                        if p.strip() and p.strip() != "self"
+                    ]
                     if len(params) > self.max_parameters:
                         issues.append(
                             QualityIssue(
@@ -91,7 +99,7 @@ class ComplexityAnalyzer:
                                 title="Too many function parameters",
                                 description=f"Function '{name}' has {len(params)} parameters.",
                                 recommendation="Consider grouping related parameters into a configuration object or dataclass.",
-                                confidence="low"
+                                confidence="low",
                             )
                         )
 
@@ -100,8 +108,8 @@ class ComplexityAnalyzer:
             name = cls.get("name", "anonymous")
             start_line = cls.get("start_point", [0])[0] + 1
             body = cls.get("body", "")
-            length = len(body.split('\\n'))
-            
+            length = len(body.split("\\n"))
+
             if length > self.max_class_length:
                 issues.append(
                     QualityIssue(
@@ -112,8 +120,8 @@ class ComplexityAnalyzer:
                         title="Class is too long",
                         description=f"Class '{name}' is {length} lines long.",
                         recommendation="Refactor into smaller classes with single responsibilities.",
-                        confidence="high"
+                        confidence="high",
                     )
                 )
-                
+
         return issues

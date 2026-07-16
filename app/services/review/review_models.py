@@ -1,6 +1,9 @@
-from typing import List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import List
+
+from pydantic import BaseModel
+
 from app.db.models import ReviewDecision, Severity
+
 
 class MergedIssue(BaseModel):
     file: str
@@ -8,10 +11,14 @@ class MergedIssue(BaseModel):
     severity: Severity
     title: str
     description: str
+    why_it_matters: str = ""
+    recommendation: str = ""
+    improved_code: str = ""
     category: str  # security, quality, logic
-    
+
     def get_hash(self) -> str:
         return f"{self.file}:{self.line}:{self.title}"
+
 
 class OrchestratorResult(BaseModel):
     merged_issues: List[MergedIssue]

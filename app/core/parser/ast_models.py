@@ -1,5 +1,7 @@
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+
 
 class BaseASTNode(BaseModel):
     name: str
@@ -7,22 +9,27 @@ class BaseASTNode(BaseModel):
     end_point: tuple[int, int]
     body: str
 
+
 class CommentNode(BaseASTNode):
     pass
+
 
 class ImportNode(BaseASTNode):
     module: Optional[str] = None
     names: List[str] = Field(default_factory=list)
+
 
 class FunctionNode(BaseASTNode):
     docstring: Optional[str] = None
     parameters: List[str] = Field(default_factory=list)
     complexity: Optional[int] = None
 
+
 class ClassNode(BaseASTNode):
     docstring: Optional[str] = None
     methods: List[FunctionNode] = Field(default_factory=list)
     base_classes: List[str] = Field(default_factory=list)
+
 
 class ASTSummary(BaseModel):
     function_count: int = 0
@@ -34,6 +41,7 @@ class ASTSummary(BaseModel):
     total_lines: int = 0
     blank_lines: int = 0
 
+
 class ParsedFile(BaseModel):
     file_path: str
     language: str
@@ -42,7 +50,7 @@ class ParsedFile(BaseModel):
     functions: List[FunctionNode] = Field(default_factory=list)
     imports: List[ImportNode] = Field(default_factory=list)
     comments: List[CommentNode] = Field(default_factory=list)
-    
-    # We might not serialize the entire raw AST tree structure 
+
+    # We might not serialize the entire raw AST tree structure
     # to avoid context window explosion in LangGraph.
     # The models above extract the core concepts for the AI agents.

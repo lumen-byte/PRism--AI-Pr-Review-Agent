@@ -1,25 +1,31 @@
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 from app.services.quality.quality_models import QualityIssue
+
 
 class CodeSmellDetector:
     def __init__(self):
         self.todo_pattern = re.compile(r"(?i)\b(?:todo|fixme)\b")
         # Matches numbers being assigned directly that aren't 0, 1, or -1 (naive heuristic)
         self.magic_number_pattern = re.compile(r"=\s*(?!0|1|-1)([2-9]|[1-9][0-9]+)\b")
-        self.commented_code_pattern = re.compile(r"^\s*(#|//)\s*(if|for|while|def|class|return)\b")
+        self.commented_code_pattern = re.compile(
+            r"^\s*(#|//)\s*(if|for|while|def|class|return)\b"
+        )
 
-    def scan(self, file_path: str, content: str, ast_data: Dict[str, Any]) -> List[QualityIssue]:
+    def scan(
+        self, file_path: str, content: str, ast_data: Dict[str, Any]
+    ) -> List[QualityIssue]:
         issues = []
         if not content:
             return issues
 
-        lines = content.split('\\n')
-        
+        lines = content.split("\\n")
+
         # Line-by-line checks
         for i, line in enumerate(lines):
             line_num = i + 1
-            
+
             if self.todo_pattern.search(line):
                 issues.append(
                     QualityIssue(
@@ -29,11 +35,12 @@ class CodeSmellDetector:
                         severity="low",
                         title="TODO/FIXME Comment found",
                         description="Leftover TODO or FIXME comments indicate incomplete work.",
+                        why_it_matters="Leaving incomplete work in production code can lead to tech debt or forgotten bugs.",
                         recommendation="Resolve the comment or track it in an issue tracker.",
-                        confidence="high"
+                        confidence="high",
                     )
                 )
-                
+
             if self.commented_code_pattern.search(line):
                 issues.append(
                     QualityIssue(
@@ -43,8 +50,9 @@ class CodeSmellDetector:
                         severity="low",
                         title="Commented-out code",
                         description="Code that is commented out clutters the file.",
+                        why_it_matters="Commented code confuses maintainers and masks true logic. Use version control instead.",
                         recommendation="Remove commented-out code. Use version control to retain history.",
-                        confidence="medium"
+                        confidence="medium",
                     )
                 )
 
@@ -53,12 +61,12 @@ class CodeSmellDetector:
         if language == "python":
             functions = ast_data.get("functions", [])
             classes = ast_data.get("classes", [])
-            
+
             for func in functions:
                 name = func.get("name", "")
                 if name.startswith("__") and name != "__init__":
-                    continue # Skip private methods
-                    
+                    continue  # Skip private methods
+
                 body = func.get("body", "")
                 start_line = func.get("start_point", [0])[0] + 1
                 if '"""' not in body and "'''" not in body:
@@ -70,11 +78,12 @@ class CodeSmellDetector:
                             severity="low",
                             title="Missing Function Docstring",
                             description=f"Public function '{name}' lacks a docstring.",
+                            why_it_matters="Missing docstrings reduce maintainability and make it harder for other developers to understand the API.",
                             recommendation="Add a descriptive docstring.",
-                            confidence="high"
+                            confidence="high",
                         )
                     )
-                    
+
             for cls in classes:
                 name = cls.get("name", "")
                 body = cls.get("body", "")
@@ -88,8 +97,9 @@ class CodeSmellDetector:
                             severity="low",
                             title="Missing Class Docstring",
                             description=f"Class '{name}' lacks a docstring.",
+                            why_it_matters="Missing docstrings reduce maintainability and make it harder for other developers to understand the API.",
                             recommendation="Add a descriptive docstring.",
-                            confidence="high"
+                            confidence="high",
                         )
                     )
 

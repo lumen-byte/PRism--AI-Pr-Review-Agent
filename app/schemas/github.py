@@ -1,10 +1,13 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional
+
+from pydantic import BaseModel
+
 
 class GitHubUser(BaseModel):
     login: str
     id: int
     avatar_url: str
+
 
 class GitHubRepository(BaseModel):
     id: int
@@ -12,6 +15,7 @@ class GitHubRepository(BaseModel):
     full_name: str
     owner: GitHubUser
     html_url: str
+
 
 class GitHubPullRequest(BaseModel):
     url: str
@@ -27,12 +31,14 @@ class GitHubPullRequest(BaseModel):
     base: dict
     head: dict
 
+
 class GitHubWebhookPayload(BaseModel):
     action: str
     number: Optional[int] = None
     pull_request: Optional[GitHubPullRequest] = None
     repository: GitHubRepository
     sender: GitHubUser
+
 
 class ChangedFile(BaseModel):
     filename: str
@@ -44,6 +50,7 @@ class ChangedFile(BaseModel):
     raw_url: str
     contents_url: str
     patch: Optional[str] = None
+
 
 class PRMetadata(BaseModel):
     pr_number: int
