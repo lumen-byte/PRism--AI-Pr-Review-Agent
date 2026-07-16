@@ -135,6 +135,16 @@ async def database_lifespan(app: FastAPI):
         logger.error(f"Failed to connect to database during startup: {e}")
         raise e
 
+    # Auto-create tables if they don't exist (first deploy to a fresh database)
+    try:
+        import app.db.models  # noqa: F401 — ensure all models are registered with Base.metadata
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables verified/created successfully.")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
+        raise e
+
     # Seed default admin user
     try:
         from app.core.auth import get_password_hash
