@@ -23,27 +23,47 @@ class Base(DeclarativeBase):
 
 
 # Normalize DATABASE_URL for async driver compatibility
-# Render (and many providers) supply postgres:// or postgresql:// URLs,
-# but SQLAlchemy async requires the postgresql+asyncpg:// scheme.
-# Additionally, asyncpg does not accept 'sslmode' — it uses 'ssl' instead.
+# Render/Neon supply postgres:// or postgresql:// URLs with query params like
+# sslmode=require and channel_binding=require that asyncpg does not accept.
+# We use urllib.parse to safely strip those params without corrupting the URL.
 import ssl as _ssl_module
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 _db_url = settings.DATABASE_URL
+
+# 1. Fix the scheme for asyncpg
 if _db_url.startswith("postgres://"):
-    _db_url = _db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    _db_url = "postgresql+asyncpg://" + _db_url[len("postgres://"):]
 elif _db_url.startswith("postgresql://"):
-    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    _db_url = "postgresql+asyncpg://" + _db_url[len("postgresql://"):]
+elif not _db_url.startswith("postgresql+asyncpg://"):
+    _db_url = "postgresql+asyncpg://" + _db_url
 
-# Detect if SSL is required, then strip sslmode from URL (asyncpg doesn't support it)
-_use_ssl = "sslmode=" in _db_url
-_db_url = _db_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
-_db_url = _db_url.replace("?sslmode=prefer", "").replace("&sslmode=prefer", "")
-_db_url = _db_url.replace("?sslmode=verify-full", "").replace("&sslmode=verify-full", "")
-# Clean up trailing ? if we stripped the only query param
-if _db_url.endswith("?"):
-    _db_url = _db_url[:-1]
+# 2. Parse the URL and strip asyncpg-incompatible query parameters
+_parsed = urlparse(_db_url)
+_params = parse_qs(_parsed.query)
 
-# Build connect_args for SSL if needed
+# Detect SSL requirement before stripping
+_use_ssl = "sslmode" in _params and _params["sslmode"][0] in (
+    "require", "prefer", "verify-ca", "verify-full"
+)
+
+# Remove parameters that asyncpg does not understand
+_asyncpg_incompatible = {"sslmode", "channel_binding"}
+_clean_params = {k: v for k, v in _params.items() if k not in _asyncpg_incompatible}
+
+# 3. Reconstruct the URL with cleaned query string
+_clean_query = urlencode(_clean_params, doseq=True)
+_db_url = urlunparse((
+    _parsed.scheme,
+    _parsed.netloc,
+    _parsed.path,
+    _parsed.params,
+    _clean_query,
+    _parsed.fragment,
+))
+
+# 4. Build connect_args for SSL if needed
 _connect_args = {}
 if _use_ssl:
     _ssl_ctx = _ssl_module.create_default_context()
