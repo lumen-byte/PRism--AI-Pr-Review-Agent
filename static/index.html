@@ -59,7 +59,7 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-view="dashboard">
-                    <i data-lucide="layout-dashboard"></i> Command Center
+                    <i data-lucide="sparkles"></i> Demo Overview
                 </a>
                 <a href="#" class="nav-item" data-view="pipeline">
                     <i data-lucide="git-branch"></i> Live Pipeline
@@ -88,8 +88,8 @@
         <main class="main-content">
             <header class="topbar">
                 <div>
-                    <h1 id="page-title">Command Center</h1>
-                    <p class="subtitle" id="page-subtitle">Real-time Telemetry & Multi-Agent Inspection</p>
+                    <h1 id="page-title">Demo Overview</h1>
+                    <p class="subtitle" id="page-subtitle">AI-Powered Pull Request Review Agent</p>
                 </div>
                 <div class="topbar-actions">
                     <div class="demo-controls">
@@ -115,77 +115,108 @@
                 </div>
             </header>
 
-            <!-- Dashboard View -->
+            <!-- Dedicated Demo Landing View -->
             <div id="view-dashboard" class="view active">
-                <!-- KPI Telemetry Grid -->
-                <div class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon blue"><i data-lucide="git-pull-request"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">Total Reviews</span>
-                            <span class="kpi-value" id="kpi-total-reviews">-</span>
+                <div class="demo-landing-container">
+                    <!-- Hero Section -->
+                    <section class="demo-hero-section">
+                        <div class="demo-badge">
+                            <i data-lucide="sparkles"></i>
+                            <span>AI-Powered Pull Request Review Agent</span>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon purple"><i data-lucide="folder-git-2"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">Repositories</span>
-                            <span class="kpi-value" id="kpi-repositories">-</span>
+                        
+                        <h1 class="demo-hero-title">PRism</h1>
+                        
+                        <p class="demo-hero-subtitle">
+                            Multi-agent system that reviews pull requests like a senior engineer.
+                        </p>
+                        
+                        <div class="demo-cta-wrapper">
+                            <button id="hero-cta-btn" class="btn-hero-cta">
+                                <i data-lucide="git-pull-request"></i>
+                                <span>Review Sample Pull Request</span>
+                                <i data-lucide="arrow-right"></i>
+                            </button>
                         </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon green"><i data-lucide="activity"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">Avg Health Score</span>
-                            <span class="kpi-value" id="kpi-health-score">-</span>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon orange"><i data-lucide="clock"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">Avg Processing Time</span>
-                            <span class="kpi-value" id="kpi-processing-time">-</span>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon red"><i data-lucide="shield-alert"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">Total Findings</span>
-                            <span class="kpi-value" id="kpi-findings">-</span>
-                            <div class="kpi-subtext" id="kpi-findings-breakdown">S:0 | Q:0 | L:0</div>
-                        </div>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <div class="kpi-icon cyan"><i data-lucide="check-circle-2"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-label">SLA (Webhook/GH)</span>
-                            <span class="kpi-value" id="kpi-sla">-</span>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- Charts Grid -->
-                <div class="charts-grid">
-                    <div class="glass-card chart-container span-2">
-                        <h3>Codebase Health Score Trend</h3>
-                        <canvas id="chart-health-trend"></canvas>
-                    </div>
-                    <div class="glass-card chart-container">
-                        <h3>Reviews Processed / Day</h3>
-                        <canvas id="chart-reviews-day"></canvas>
-                    </div>
-                    <div class="glass-card chart-container">
-                        <h3>Finding Severity Breakdown</h3>
-                        <canvas id="chart-severity"></canvas>
-                    </div>
-                    <div class="glass-card chart-container">
-                        <h3>Repository Risk Distribution</h3>
-                        <canvas id="chart-repo-activity"></canvas>
-                    </div>
-                    <div class="glass-card chart-container span-2">
-                        <h3>Agent Execution Latency Telemetry</h3>
-                        <canvas id="chart-latency"></canvas>
-                    </div>
+                    <!-- Feature Cards Section (3 Cards) -->
+                    <section class="demo-features-section">
+                        <div class="demo-features-grid">
+                            <!-- Feature Card 1 -->
+                            <div class="glass-card demo-feature-card">
+                                <div class="feature-card-icon blue">
+                                    <i data-lucide="cpu"></i>
+                                </div>
+                                <h3>5 Specialized AI Agents</h3>
+                                <p>Diff Analyzer, Tree-sitter AST, Security, Quality, and Logic agents evaluate pull requests in parallel to detect issues across languages.</p>
+                            </div>
+                            
+                            <!-- Feature Card 2 -->
+                            <div class="glass-card demo-feature-card">
+                                <div class="feature-card-icon red">
+                                    <i data-lucide="shield-check"></i>
+                                </div>
+                                <h3>Security • Quality • Logic Analysis</h3>
+                                <p>Comprehensive tri-agent inspection targeting SQL vulnerabilities, secret leaks, cyclomatic complexity, code smells, and logical edge cases.</p>
+                            </div>
+
+                            <!-- Feature Card 3 -->
+                            <div class="glass-card demo-feature-card">
+                                <div class="feature-card-icon green">
+                                    <i data-lucide="message-square-code"></i>
+                                </div>
+                                <h3>GitHub Inline Review Comments</h3>
+                                <p>Publishes line-level contextual review comments with actionable replacement code suggestions directly onto GitHub pull request diffs.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- How PRism Works Section (3 Steps Only) -->
+                    <section class="demo-how-it-works-section">
+                        <div class="section-header text-center">
+                            <h2 class="section-title">How PRism Works</h2>
+                            <p class="section-subtitle">Autonomous 3-step pipeline from GitHub event to code review comment</p>
+                        </div>
+                        
+                        <div class="demo-steps-grid">
+                            <!-- Step 1 -->
+                            <div class="glass-card demo-step-card">
+                                <div class="step-number-badge">1</div>
+                                <div class="step-content">
+                                    <div class="step-header">
+                                        <i data-lucide="webhook"></i>
+                                        <h4>Webhook & Diff Trigger</h4>
+                                    </div>
+                                    <p>GitHub emits a webhook on PR creation. PRism intercepts diffs and extracts syntax trees via native Tree-sitter grammars.</p>
+                                </div>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="glass-card demo-step-card">
+                                <div class="step-number-badge">2</div>
+                                <div class="step-content">
+                                    <div class="step-header">
+                                        <i data-lucide="layers"></i>
+                                        <h4>Multi-Agent Analysis</h4>
+                                    </div>
+                                    <p>LangGraph orchestrates parallel execution of Security, Quality, and Logic agents, resolving issue conflicts transactionally.</p>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="glass-card demo-step-card">
+                                <div class="step-number-badge">3</div>
+                                <div class="step-content">
+                                    <div class="step-header">
+                                        <i data-lucide="git-merge"></i>
+                                        <h4>Inline GitHub Publishing</h4>
+                                    </div>
+                                    <p>Review Orchestrator synthesizes findings and automatically posts structured inline code review comments back to GitHub.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
 

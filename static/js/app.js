@@ -43,8 +43,17 @@ const ghModalClose = document.getElementById('gh-preview-close');
 // Demo controls
 const quickDemoBtn = document.getElementById('quick-demo-btn');
 const runDemoBtn = document.getElementById('run-demo-btn');
+const heroCtaBtn = document.getElementById('hero-cta-btn');
 const demoScenarioSelect = document.getElementById('demo-scenario-select');
 const demoBtnText = document.getElementById('demo-btn-text');
+
+// Primary CTA Navigation to Demo Pipeline
+if (heroCtaBtn) {
+    heroCtaBtn.addEventListener('click', () => {
+        const pipelineNavItem = document.querySelector('.nav-item[data-view="pipeline"]');
+        if (pipelineNavItem) pipelineNavItem.click();
+    });
+}
 
 // Quick Demo Login for Recruiters
 if (quickDemoBtn) {
@@ -153,8 +162,8 @@ function switchView(viewName) {
     document.getElementById(`view-${viewName}`).classList.remove('hidden');
     
     if (viewName === 'dashboard') {
-        pageTitle.textContent = "Command Center";
-        pageSubtitle.textContent = "Real-time Telemetry & Multi-Agent Inspection";
+        pageTitle.textContent = "Demo Overview";
+        pageSubtitle.textContent = "AI-Powered Pull Request Review Agent";
     } else if (viewName === 'pipeline') {
         pageTitle.textContent = "Live LangGraph Pipeline Visualizer";
         pageSubtitle.textContent = "Step-by-step Visual Workflow & Agent Telemetry";

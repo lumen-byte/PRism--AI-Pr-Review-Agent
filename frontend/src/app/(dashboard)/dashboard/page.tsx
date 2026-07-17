@@ -1,88 +1,141 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Activity, ShieldAlert, GitPullRequest, Code, Clock } from "lucide-react";
+import React from "react";
+import { useRouter } from "next/navigation";
+import { 
+  Sparkles, 
+  GitPullRequest, 
+  ArrowRight, 
+  Cpu, 
+  ShieldCheck, 
+  MessageSquareCode, 
+  Webhook, 
+  Layers, 
+  GitMerge 
+} from "lucide-react";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<any>(null);
+  const router = useRouter();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const token = localStorage.getItem("prism_token");
-      try {
-        const res = await fetch("/api/v1/dashboard/stats", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
-      } catch (err) {
-        console.error("Error fetching stats:", err);
-      }
-    };
-    fetchStats();
-  }, []);
+  const handleCtaClick = () => {
+    router.push("/explorer");
+  };
 
   return (
     <div className="view">
       <div className="topbar">
-        <h1 id="page-title">Command Center</h1>
+        <div>
+          <h1 id="page-title">Demo Overview</h1>
+          <p className="subtitle" id="page-subtitle">AI-Powered Pull Request Review Agent</p>
+        </div>
         <div className="status-indicator">
           <div className="status-dot healthy"></div>
-          <span>System Healthy</span>
+          <span>System Optimal</span>
         </div>
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: "3rem", marginTop: "2rem" }}>
-        <h2 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>PRism Intelligent Pull Request Agent</h2>
-        <p className="subtitle">Review and analyze pull requests autonomously.</p>
-      </div>
+      <div className="demo-landing-container">
+        {/* Hero Section */}
+        <section className="demo-hero-section">
+          <div className="demo-badge">
+            <Sparkles size={16} />
+            <span>AI-Powered Pull Request Review Agent</span>
+          </div>
+          
+          <h1 className="demo-hero-title">PRism</h1>
+          
+          <p className="demo-hero-subtitle">
+            Multi-agent system that reviews pull requests like a senior engineer.
+          </p>
+          
+          <div className="demo-cta-wrapper">
+            <button onClick={handleCtaClick} className="btn-hero-cta">
+              <GitPullRequest size={20} />
+              <span>Review Sample Pull Request</span>
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        </section>
 
-      {stats && (
-        <div className="kpi-grid">
-          <div className="glass-card kpi-card">
-            <div className="kpi-icon blue"><GitPullRequest size={24} /></div>
-            <div className="kpi-data">
-              <span className="kpi-label">Total Reviews</span>
-              <span className="kpi-value">{stats.total_reviews}</span>
+        {/* Feature Cards Section (3 Cards) */}
+        <section className="demo-features-section">
+          <div className="demo-features-grid">
+            {/* Feature Card 1 */}
+            <div className="glass-card demo-feature-card">
+              <div className="feature-card-icon blue">
+                <Cpu size={24} />
+              </div>
+              <h3>5 Specialized AI Agents</h3>
+              <p>Diff Analyzer, Tree-sitter AST, Security, Quality, and Logic agents evaluate pull requests in parallel to detect issues across languages.</p>
+            </div>
+            
+            {/* Feature Card 2 */}
+            <div className="glass-card demo-feature-card">
+              <div className="feature-card-icon red">
+                <ShieldCheck size={24} />
+              </div>
+              <h3>Security • Quality • Logic Analysis</h3>
+              <p>Comprehensive tri-agent inspection targeting SQL vulnerabilities, secret leaks, cyclomatic complexity, code smells, and logical edge cases.</p>
+            </div>
+
+            {/* Feature Card 3 */}
+            <div className="glass-card demo-feature-card">
+              <div className="feature-card-icon green">
+                <MessageSquareCode size={24} />
+              </div>
+              <h3>GitHub Inline Review Comments</h3>
+              <p>Publishes line-level contextual review comments with actionable replacement code suggestions directly onto GitHub pull request diffs.</p>
             </div>
           </div>
-          <div className="glass-card kpi-card">
-            <div className="kpi-icon purple"><Code size={24} /></div>
-            <div className="kpi-data">
-              <span className="kpi-label">Repositories</span>
-              <span className="kpi-value">{stats.total_repositories}</span>
+        </section>
+
+        {/* How PRism Works Section (3 Steps Only) */}
+        <section className="demo-how-it-works-section">
+          <div className="section-header text-center">
+            <h2 className="section-title">How PRism Works</h2>
+            <p className="section-subtitle">Autonomous 3-step pipeline from GitHub event to code review comment</p>
+          </div>
+          
+          <div className="demo-steps-grid">
+            {/* Step 1 */}
+            <div className="glass-card demo-step-card">
+              <div className="step-number-badge">1</div>
+              <div className="step-content">
+                <div className="step-header">
+                  <Webhook size={18} />
+                  <h4>Webhook & Diff Trigger</h4>
+                </div>
+                <p>GitHub emits a webhook on PR creation. PRism intercepts diffs and extracts syntax trees via native Tree-sitter grammars.</p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="glass-card demo-step-card">
+              <div className="step-number-badge">2</div>
+              <div className="step-content">
+                <div className="step-header">
+                  <Layers size={18} />
+                  <h4>Multi-Agent Analysis</h4>
+                </div>
+                <p>LangGraph orchestrates parallel execution of Security, Quality, and Logic agents, resolving issue conflicts transactionally.</p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="glass-card demo-step-card">
+              <div className="step-number-badge">3</div>
+              <div className="step-content">
+                <div className="step-header">
+                  <GitMerge size={18} />
+                  <h4>Inline GitHub Publishing</h4>
+                </div>
+                <p>Review Orchestrator synthesizes findings and automatically posts structured inline code review comments back to GitHub.</p>
+              </div>
             </div>
           </div>
-          <div className="glass-card kpi-card">
-            <div className="kpi-icon green"><Activity size={24} /></div>
-            <div className="kpi-data">
-              <span className="kpi-label">Health Score</span>
-              <span className="kpi-value" style={{ color: stats.avg_health_score > 80 ? 'var(--color-success)' : stats.avg_health_score < 50 ? 'var(--color-danger)' : 'var(--text-main)' }}>
-                {stats.avg_health_score}
-              </span>
-            </div>
-          </div>
-          <div className="glass-card kpi-card">
-            <div className="kpi-icon orange"><Clock size={24} /></div>
-            <div className="kpi-data">
-              <span className="kpi-label">Avg Processing Time</span>
-              <span className="kpi-value">{stats.avg_review_time}s</span>
-            </div>
-          </div>
-          <div className="glass-card kpi-card">
-            <div className="kpi-icon red"><ShieldAlert size={24} /></div>
-            <div className="kpi-data">
-              <span className="kpi-label">Total Findings</span>
-              <span className="kpi-value">{stats.security_issues + stats.quality_issues + stats.logic_issues}</span>
-              <span className="kpi-subtext">S:{stats.security_issues} | Q:{stats.quality_issues} | L:{stats.logic_issues}</span>
-            </div>
-          </div>
-        </div>
-      )}
+        </section>
+      </div>
     </div>
   );
 }
+
