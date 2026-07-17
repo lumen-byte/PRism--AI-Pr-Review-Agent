@@ -235,12 +235,12 @@
                             <!-- File: config.py -->
                             <div class="diff-file">
                                 <div class="diff-header">config.py</div>
-                                <pre><code class="language-python"><div class="diff-line removed"><span class="diff-prefix">-</span> api_key = "sk-proj-abc123def456ghi789"</div><div class="diff-line added"><span class="diff-prefix">+</span> api_key = os.getenv("OPENAI_API_KEY")</div></code></pre>
+                                <pre><code class="language-python"><div class="diff-line removed" id="diff-config-remove"><span class="diff-prefix">-</span> api_key = "sk-proj-abc123def456ghi789"</div><div class="diff-line added" id="diff-config-add"><span class="diff-prefix">+</span> api_key = os.getenv("OPENAI_API_KEY")</div></code></pre>
                             </div>
                             <!-- File: payments.py -->
                             <div class="diff-file">
                                 <div class="diff-header">payments.py</div>
-                                <pre><code class="language-python"><div class="diff-line added"><span class="diff-prefix">+</span> import datetime</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> import os</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> from typing import Optional</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span> def process_payment(</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     user,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     amount,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     currency,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     method,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     description,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     metadata,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     retry_count,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     timeout,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     callback</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> ):</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line added"><span class="diff-prefix">+</span>   account = user.account</div><div class="diff-line added"><span class="diff-prefix">+</span>   balance = account.balance</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     ...</div></code></pre>
+                                <pre><code class="language-python"><div class="diff-line added" id="diff-payments-import"><span class="diff-prefix">+</span> import datetime</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> import os</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> from typing import Optional</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span> def process_payment(</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     user,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     amount,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     currency,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     method,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     description,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     metadata,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     retry_count,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     timeout,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     callback</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> ):</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line added" id="diff-payments-account"><span class="diff-prefix">+</span>   account = user.account</div><div class="diff-line added" id="diff-payments-balance"><span class="diff-prefix">+</span>   balance = account.balance</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     ...</div></code></pre>
                             </div>
                             <!-- File: utils.py -->
                             <div class="diff-file">
@@ -252,52 +252,65 @@
                     
                     <div class="workspace-right">
                         <div class="workspace-main">
-                            <div class="workspace-header">
+                            <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center;">
                                 <h2>AI Review Pipeline</h2>
+                                <button id="reset-demo-btn" class="btn-secondary hidden" style="padding: 4px 12px; font-size: 0.8rem;">Reset Demo</button>
                             </div>
                             <div class="pipeline-cards-list">
-                                <div class="workspace-card pipeline-stage">
+                                <div class="workspace-card pipeline-stage" id="card-fetcher">
                                     <div class="card-head">
-                                        <h3>PR Fetcher</h3>
-                                        <span class="status-badge waiting">Waiting</span>
+                                        <h3><i data-lucide="download" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>PR Fetcher</h3>
+                                        <span class="status-badge waiting" id="badge-fetcher">Waiting</span>
                                     </div>
-                                    <p>Fetches GitHub PR and parses repository metadata.</p>
+                                    <div class="card-messages" id="msg-fetcher">
+                                        <p>Fetches GitHub PR and parses repository metadata.</p>
+                                    </div>
                                 </div>
-                                <div class="workspace-card pipeline-stage">
+                                <div class="workspace-card pipeline-stage" id="card-security">
                                     <div class="card-head">
-                                        <h3>Security Agent</h3>
-                                        <span class="status-badge waiting">Waiting</span>
+                                        <h3><i data-lucide="shield-alert" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>Security Agent</h3>
+                                        <span class="status-badge waiting" id="badge-security">Waiting</span>
                                     </div>
-                                    <p>Searches for vulnerabilities and secrets.</p>
+                                    <div class="card-messages" id="msg-security">
+                                        <p>Searches for vulnerabilities and secrets.</p>
+                                    </div>
                                 </div>
-                                <div class="workspace-card pipeline-stage">
+                                <div class="workspace-card pipeline-stage" id="card-quality">
                                     <div class="card-head">
-                                        <h3>Code Quality Agent</h3>
-                                        <span class="status-badge waiting">Waiting</span>
+                                        <h3><i data-lucide="sparkles" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>Code Quality Agent</h3>
+                                        <span class="status-badge waiting" id="badge-quality">Waiting</span>
                                     </div>
-                                    <p>Checks complexity, style and maintainability.</p>
+                                    <div class="card-messages" id="msg-quality">
+                                        <p>Checks complexity, style and maintainability.</p>
+                                    </div>
                                 </div>
-                                <div class="workspace-card pipeline-stage">
+                                <div class="workspace-card pipeline-stage" id="card-logic">
                                     <div class="card-head">
-                                        <h3>Logic Agent</h3>
-                                        <span class="status-badge waiting">Waiting</span>
+                                        <h3><i data-lucide="cpu" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>Logic Agent</h3>
+                                        <span class="status-badge waiting" id="badge-logic">Waiting</span>
                                     </div>
-                                    <p>Finds logical errors and risky code paths.</p>
+                                    <div class="card-messages" id="msg-logic">
+                                        <p>Finds logical errors and risky code paths.</p>
+                                    </div>
                                 </div>
-                                <div class="workspace-card pipeline-stage">
+                                <div class="workspace-card pipeline-stage" id="card-orchestrator">
                                     <div class="card-head">
-                                        <h3>Review Orchestrator</h3>
-                                        <span class="status-badge waiting">Waiting</span>
+                                        <h3><i data-lucide="git-merge" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>Review Orchestrator</h3>
+                                        <span class="status-badge waiting" id="badge-orchestrator">Waiting</span>
                                     </div>
-                                    <p>Combines findings and prepares GitHub review.</p>
+                                    <div class="card-messages" id="msg-orchestrator">
+                                        <p>Combines findings and prepares GitHub review.</p>
+                                    </div>
                                 </div>
                             </div>
                             
                             <div class="workspace-header mt-4">
                                 <h2>GitHub Review Comments</h2>
                             </div>
-                            <div class="workspace-card placeholder-card">
-                                <p>No review generated yet.</p>
+                            <div id="comments-container">
+                                <div class="workspace-card placeholder-card" id="comments-placeholder">
+                                    <p>No review generated yet.</p>
+                                </div>
                             </div>
                         </div>
                         
@@ -308,15 +321,15 @@
                             <div class="workspace-card metrics-card">
                                 <div class="metric-row">
                                     <span class="metric-lbl">PR Health Score</span>
-                                    <span class="metric-val">--</span>
+                                    <span class="metric-val" id="metric-health">--</span>
                                 </div>
                                 <div class="metric-row">
                                     <span class="metric-lbl">Decision</span>
-                                    <span class="metric-val">Waiting...</span>
+                                    <span class="metric-val" id="metric-decision">Waiting...</span>
                                 </div>
                                 <div class="metric-row">
                                     <span class="metric-lbl">Review Time</span>
-                                    <span class="metric-val">--</span>
+                                    <span class="metric-val" id="metric-time">--</span>
                                 </div>
                             </div>
                         </div>

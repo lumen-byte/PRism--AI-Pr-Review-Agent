@@ -48,10 +48,12 @@ const demoScenarioSelect = document.getElementById('demo-scenario-select');
 const demoBtnText = document.getElementById('demo-btn-text');
 
 // Primary CTA Navigation to Demo Pipeline
+let demoEventSource = null;
 if (heroCtaBtn) {
     heroCtaBtn.addEventListener('click', () => {
         const pipelineNavItem = document.querySelector('.nav-item[data-view="pipeline"]');
         if (pipelineNavItem) pipelineNavItem.click();
+        startDemoStreaming();
     });
 }
 
@@ -335,129 +337,172 @@ function startPipelineAnimation(scenario) {
         if (badgeEl) badgeEl.textContent = 'IDLE';
     });
 
-    ['security', 'quality', 'logic', 'diff'].forEach(agent => {
-        const tag = document.getElementById(`agent-tag-${agent}`);
-        if (tag) { tag.className = 'status-tag idle'; tag.textContent = 'IDLE'; }
-        const lat = document.getElementById(`agent-lat-${agent}`); if (lat) lat.textContent = '-';
-        const find = document.getElementById(`agent-find-${agent}`); if (find) find.textContent = '-';
-    });
+    const agentMap = {
+        "PR Fetcher": "fetcher",
+        "Security Agent": "security",
+        "Code Quality Agent": "quality",
+        "Logic Agent": "logic",
+        "Review Orchestrator": "orchestrator"
+    };
 
-    document.getElementById('live-terminal-stream').innerHTML = '';
-    appendLog(`[SYSTEM] Dispatched execution job for scenario: ${scenario.toUpperCase()}`);
-
-    let startTime = Date.now();
-    pipelineTimerInterval = setInterval(() => {
-        let elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-        elapsedTimeEl.textContent = `Elapsed: ${elapsed}s`;
-    }, 50);
-
-    // Sequence simulation timeline (2.8s total runtime)
-    const sequence = [
-        { time: 100, node: 'webhook', text: 'Step 1/8: Webhook received. HMAC-SHA256 signature verified.', progress: 12 },
-        { time: 400, node: 'diff', text: 'Step 2/8: Diff Analyzer parsing modified patch files...', progress: 25, agent: 'diff' },
-        { time: 700, node: 'treesitter', text: 'Step 3/8: Tree-sitter AST scope generation completed.', progress: 38 },
-        { time: 1000, parallel: ['security', 'quality', 'logic'], text: 'Step 4/8: Fan-out parallel execution (Security, Quality, Logic Agents running concurrently)...', progress: 62 },
-        { time: 1900, node: 'orchestrator', text: 'Step 5/8: Specialized findings fan-in to Review Orchestrator. Deduplicating and calculating health score...', progress: 78 },
-        { time: 2300, node: 'db', text: 'Step 6/8: Persisting reviews, pull request records, and line comments into PostgreSQL (asyncpg)...', progress: 88 },
-        { time: 2600, node: 'publisher', text: 'Step 7/8: Review Publisher published inline feedback and decision badge.', progress: 95 },
-        { time: 2900, completed: true, text: 'Step 8/8: Execution pipeline completed successfully!', progress: 100 }
-    ];
-
-    sequence.forEach(step => {
-        setTimeout(() => {
-            progressBar.style.width = `${step.progress}%`;
-            statusText.textContent = step.text;
-            appendLog(step.text, step.completed ? 'success' : 'highlight');
-
-            if (step.node) {
-                activateNode(step.node);
-            }
-            if (step.parallel) {
-                step.parallel.forEach(n => {
-                    activateNode(n);
-                    setAgentStatus(n, 'RUNNING', '~450ms', 'Scanning...');
-                });
-            }
-            if (step.agent === 'diff') {
-                setAgentStatus('diff', 'RUNNING', '120ms', '3 files');
-            }
-            if (step.completed) {
-                clearInterval(pipelineTimerInterval);
-                activePrEl.textContent = `PR Review Successfully Generated!`;
-                runDemoBtn.disabled = false;
-                demoBtnText.textContent = 'Run AI Demo';
-
-                // Set final agent completion metrics based on scenario
-                setAgentMetricsForScenario(scenario);
-                loadCurrentView();
-            }
-        }, step.time);
-    });
-}
-
-function activateNode(nodeId) {
-    const el = document.getElementById(`node-${nodeId}`);
-    const badge = document.getElementById(`badge-${nodeId}`);
-    if (el) el.classList.add('active');
-    if (badge) badge.textContent = 'ACTIVE';
-
-    setTimeout(() => {
-        if (el) {
-            el.classList.remove('active');
-            el.classList.add('completed');
+    function startDemoStreaming() {
+        if (demoEventSource) {
+            demoEventSource.close();
         }
-        if (badge) badge.textContent = 'DONE';
-    }, 500);
-}
+        
+        resetDemoUI();
+        
+        demoEventSource = new EventSource('/api/demo/stream');
+        
+        // Track completed agents to emit comments only ONCE per agent
+        const completedAgents = new Set();
+        
+        demoEventSource.onmessage = (e) => {
+            const event = JSON.parse(e.data);
+            const agentId = agentMap[event.agent];
+            
+            if (!agentId) return;
 
-function setAgentStatus(agent, status, lat, find) {
-    const tag = document.getElementById(`agent-tag-${agent}`);
-    if (tag) {
-        tag.className = `status-tag ${status.toLowerCase()}`;
-        tag.textContent = status;
+            // Update Status Badge
+            const badge = document.getElementById(`badge-${agentId}`);
+            if (badge) {
+                badge.textContent = event.status;
+                badge.className = `status-badge ${event.status.toLowerCase().replace(' ', '-')}`;
+                if (event.status === "Issue Found") {
+                    if (event.type === "critical") badge.classList.add("critical");
+                    else badge.classList.add("issue");
+                }
+            }
+
+            // Append messages
+            const msgContainer = document.getElementById(`msg-${agentId}`);
+            if (msgContainer) {
+                if (msgContainer.querySelector('p')) {
+                    msgContainer.innerHTML = '';
+                }
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${event.type}`;
+                logEntry.textContent = event.message;
+                msgContainer.appendChild(logEntry);
+            }
+
+            // Syntax highlighting
+            if (event.highlight) {
+                if (event.highlight === "config.py") {
+                    document.getElementById('diff-config-remove')?.classList.add('highlight-red');
+                    document.getElementById('diff-config-add')?.classList.add('highlight-red');
+                } else if (event.highlight === "process_payment") {
+                    document.getElementById('diff-payments-import')?.classList.add('highlight-yellow');
+                } else if (event.highlight === "account.balance") {
+                    document.getElementById('diff-payments-account')?.classList.add('highlight-yellow');
+                    document.getElementById('diff-payments-balance')?.classList.add('highlight-yellow');
+                }
+            }
+
+            // Post github review comment
+            if ((event.status === "Issue Found" || event.status === "Completed") && !completedAgents.has(agentId)) {
+                completedAgents.add(agentId);
+                // fetcher and orchestrator do not produce individual review comments
+                if (agentId !== "fetcher" && agentId !== "orchestrator") {
+                    createGithubComment(event.agent, msgContainer.innerHTML);
+                }
+            }
+
+            // Finish demo
+            if (event.final_summary) {
+                document.getElementById('metric-health').textContent = '34 / 100';
+                document.getElementById('metric-decision').textContent = 'CHANGES REQUESTED';
+                document.getElementById('metric-decision').style.color = '#f85149';
+                document.getElementById('metric-time').textContent = '8.3 seconds';
+                
+                document.getElementById('reset-demo-btn').classList.remove('hidden');
+                demoEventSource.close();
+            }
+        };
+
+        demoEventSource.onerror = () => {
+            demoEventSource.close();
+        };
     }
-    const latEl = document.getElementById(`agent-lat-${agent}`);
-    if (latEl && lat) latEl.textContent = lat;
-    const findEl = document.getElementById(`agent-find-${agent}`);
-    if (findEl && find) findEl.textContent = find;
-}
 
-function setAgentMetricsForScenario(scenario) {
-    if (scenario === 'security' || scenario === 'mixed') {
-        setAgentStatus('security', 'COMPLETED', '480ms', '2 Critical SQLi');
-    } else {
-        setAgentStatus('security', 'COMPLETED', '320ms', '0 Vulnerabilities');
+    function createGithubComment(agent, logsHtml) {
+        const container = document.getElementById('comments-container');
+        const placeholder = document.getElementById('comments-placeholder');
+        if (placeholder) placeholder.remove();
+
+        const comment = document.createElement('div');
+        comment.className = 'workspace-card gh-comment-card';
+        comment.innerHTML = `
+            <div class="gh-comment-header">
+                <i data-lucide="github" style="width:16px;height:16px;"></i>
+                <span>${agent} (PRism Bot)</span>
+            </div>
+            <div class="gh-comment-body">
+                ${logsHtml}
+            </div>
+        `;
+        container.appendChild(comment);
+        lucide.createIcons();
     }
 
-    if (scenario === 'quality' || scenario === 'mixed') {
-        setAgentStatus('quality', 'COMPLETED', '520ms', '3 Code Smells');
-    } else {
-        setAgentStatus('quality', 'COMPLETED', '290ms', 'Optimal Quality');
+    function resetDemoUI() {
+        const resetBtn = document.getElementById('reset-demo-btn');
+        if (resetBtn) resetBtn.classList.add('hidden');
+        
+        document.querySelectorAll('.diff-line').forEach(el => {
+            el.classList.remove('highlight-red', 'highlight-yellow');
+        });
+
+        const initialDesc = {
+            "fetcher": "Fetches GitHub PR and parses repository metadata.",
+            "security": "Searches for vulnerabilities and secrets.",
+            "quality": "Checks complexity, style and maintainability.",
+            "logic": "Finds logical errors and risky code paths.",
+            "orchestrator": "Combines findings and prepares GitHub review."
+        };
+        
+        Object.keys(agentMap).forEach(key => {
+            const id = agentMap[key];
+            const badge = document.getElementById(`badge-${id}`);
+            if (badge) {
+                badge.textContent = "Waiting";
+                badge.className = "status-badge waiting";
+            }
+            const msg = document.getElementById(`msg-${id}`);
+            if (msg) {
+                msg.innerHTML = `<p>${initialDesc[id]}</p>`;
+            }
+        });
+
+        const commentsContainer = document.getElementById('comments-container');
+        if (commentsContainer) {
+            commentsContainer.innerHTML = `
+                <div class="workspace-card placeholder-card" id="comments-placeholder">
+                    <p>No review generated yet.</p>
+                </div>
+            `;
+        }
+
+        const health = document.getElementById('metric-health');
+        if (health) health.textContent = '--';
+        
+        const decision = document.getElementById('metric-decision');
+        if (decision) {
+            decision.textContent = 'Waiting...';
+            decision.style.color = '#e6edf3';
+        }
+        
+        const time = document.getElementById('metric-time');
+        if (time) time.textContent = '--';
     }
 
-    if (scenario === 'logic' || scenario === 'mixed') {
-        setAgentStatus('logic', 'COMPLETED', '410ms', '1 Logic Edge-case');
-    } else {
-        setAgentStatus('logic', 'COMPLETED', '310ms', '0 Logic Errors');
+    const resetBtnEl = document.getElementById('reset-demo-btn');
+    if (resetBtnEl) {
+        resetBtnEl.addEventListener('click', () => {
+            startDemoStreaming();
+        });
     }
 
-    setAgentStatus('diff', 'COMPLETED', '110ms', '3 Files Parsed');
-}
-
-function appendLog(msg, type = 'normal') {
-    const stream = document.getElementById('live-terminal-stream');
-    if (!stream) return;
-    const time = new Date().toLocaleTimeString();
-    const div = document.createElement('div');
-    div.className = 'log-line';
-    div.innerHTML = `<span style="color:#64748b; margin-right:8px;">[${time}]</span><span class="${type}">${msg}</span>`;
-    stream.appendChild(div);
-    stream.scrollTop = stream.scrollHeight;
-}
-
-document.getElementById('clear-log-btn')?.addEventListener('click', () => {
-    document.getElementById('live-terminal-stream').innerHTML = '<div class="log-line">[SYSTEM] Console cleared. Waiting for next execution trigger.</div>';
-});
 
 // --- Explorer & GitHub Render Preview ---
 searchRepo.addEventListener('input', debounce(loadExplorer, 500));

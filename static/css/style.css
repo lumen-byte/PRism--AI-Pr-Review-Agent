@@ -1293,3 +1293,86 @@ h1, h2, h3 {
         width: 100%;
     }
 }
+
+/* Streaming dynamic states */
+.status-badge.running {
+    background: rgba(56, 139, 253, 0.15);
+    color: #58a6ff;
+    border: 1px solid rgba(56, 139, 253, 0.3);
+}
+
+.status-badge.completed {
+    background: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+    border: 1px solid rgba(46, 160, 67, 0.3);
+}
+
+.status-badge.issue {
+    background: rgba(210, 153, 34, 0.15);
+    color: #d29922;
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.status-badge.critical {
+    background: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.diff-line {
+    transition: all 0.3s ease;
+}
+
+.diff-line.highlight-red {
+    box-shadow: inset 0 0 10px rgba(248, 81, 73, 0.5);
+    background-color: rgba(248, 81, 73, 0.2) !important;
+}
+
+.diff-line.highlight-yellow {
+    box-shadow: inset 0 0 10px rgba(210, 153, 34, 0.5);
+    background-color: rgba(210, 153, 34, 0.2) !important;
+}
+
+.log-entry {
+    margin: 4px 0;
+    font-size: 0.85rem;
+    padding-left: 8px;
+    border-left: 2px solid transparent;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.log-entry.info { color: #8b949e; border-left-color: #58a6ff; }
+.log-entry.warning { color: #d29922; border-left-color: #d29922; }
+.log-entry.alert { color: #f85149; border-left-color: #f85149; }
+.log-entry.critical { color: #f85149; border-left-color: #f85149; font-weight: bold; }
+.log-entry.done { color: #3fb950; font-weight: 600; border-left-color: #3fb950; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.gh-comment-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    animation: fadeIn 0.4s ease forwards;
+}
+.gh-comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: #8b949e;
+    font-weight: 600;
+}
+.gh-comment-body {
+    color: #e6edf3;
+    line-height: 1.5;
+}
+.gh-comment-body strong {
+    color: #f85149;
+}
