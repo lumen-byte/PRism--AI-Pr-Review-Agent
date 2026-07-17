@@ -73,6 +73,9 @@
                 <a href="#" class="nav-item" data-view="issues">
                     <i data-lucide="alert-triangle"></i> Global Findings
                 </a>
+                <a href="#" class="nav-item" data-view="ops">
+                    <i data-lucide="activity"></i> System Operations
+                </a>
                 <a href="#" class="nav-item" data-view="architecture">
                     <i data-lucide="cpu"></i> System Architecture
                 </a>
@@ -654,6 +657,91 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            <!-- Operations & Observability View -->
+            <div id="view-ops" class="view hidden">
+                <div class="ops-container" style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 1400px; margin: 0 auto; padding-bottom: 2rem;">
+                    
+                    <!-- Top Row: Pipeline Metrics (Summary) -->
+                    <div class="workspace-card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Total Reviews</span>
+                            <span class="ops-metric-value" id="ops-total-reviews" style="font-size: 1.5rem; font-weight: 600; color: #c9d1d9;">--</span>
+                        </div>
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Successful</span>
+                            <span class="ops-metric-value" id="ops-success-reviews" style="font-size: 1.5rem; font-weight: 600; color: #3fb950;">--</span>
+                        </div>
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Failed</span>
+                            <span class="ops-metric-value" id="ops-failed-reviews" style="font-size: 1.5rem; font-weight: 600; color: #f85149;">--</span>
+                        </div>
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Avg Review Time</span>
+                            <span class="ops-metric-value" id="ops-avg-time" style="font-size: 1.5rem; font-weight: 600; color: #c9d1d9;">--</span>
+                        </div>
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Avg Health Score</span>
+                            <span class="ops-metric-value" id="ops-avg-health" style="font-size: 1.5rem; font-weight: 600; color: #c9d1d9;">--</span>
+                        </div>
+                        <div class="ops-metric-item">
+                            <span class="ops-metric-label" style="font-size: 0.8rem; color: #8b949e; display: block; margin-bottom: 4px;">Critical / Warnings</span>
+                            <span class="ops-metric-value" id="ops-issues-found" style="font-size: 1.5rem; font-weight: 600; color: #c9d1d9;">-- / --</span>
+                        </div>
+                    </div>
+
+                    <!-- Health Cards Row -->
+                    <div>
+                        <h3 style="margin-bottom: 1rem; color: #c9d1d9; font-size: 1.1rem; font-weight: 600;">System Health</h3>
+                        <div class="ops-health-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;" id="ops-health-cards">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Layout Grid: Agent Performance (Left) and Error Logs (Right) -->
+                    <div class="ops-middle-grid" style="display: grid; grid-template-columns: 3fr 2fr; gap: 1.5rem;">
+                        
+                        <!-- Agent Performance -->
+                        <div>
+                            <h3 style="margin-bottom: 1rem; color: #c9d1d9; font-size: 1.1rem; font-weight: 600;">Agent Performance (LangGraph)</h3>
+                            <div class="workspace-card" style="padding: 1rem; overflow-x: auto;">
+                                <table class="glass-table ops-table" style="width: 100%; text-align: left; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding-bottom: 10px; border-bottom: 1px solid #30363d; font-size: 0.8rem; color: #8b949e; font-weight: 600;">Agent Node</th>
+                                            <th style="padding-bottom: 10px; border-bottom: 1px solid #30363d; font-size: 0.8rem; color: #8b949e; font-weight: 600;">Runs</th>
+                                            <th style="padding-bottom: 10px; border-bottom: 1px solid #30363d; font-size: 0.8rem; color: #8b949e; font-weight: 600;">Avg Time</th>
+                                            <th style="padding-bottom: 10px; border-bottom: 1px solid #30363d; font-size: 0.8rem; color: #8b949e; font-weight: 600;">Success Rate</th>
+                                            <th style="padding-bottom: 10px; border-bottom: 1px solid #30363d; font-size: 0.8rem; color: #8b949e; font-weight: 600;">Last Execution</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ops-agent-tbody" style="font-size: 0.9rem;">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Error Logs -->
+                        <div>
+                            <h3 style="margin-bottom: 1rem; color: #c9d1d9; font-size: 1.1rem; font-weight: 600;">System Error Logs</h3>
+                            <div class="workspace-card ops-error-log" id="ops-error-log" style="padding: 1rem; height: 100%; max-height: 280px; overflow-y: auto; font-family: 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.5;">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Recent Executions & Timeline -->
+                    <div>
+                        <h3 style="margin-bottom: 1rem; color: #c9d1d9; font-size: 1.1rem; font-weight: 600;">Recent Pipeline Executions</h3>
+                        <div class="workspace-card" style="padding: 1rem;">
+                            <div class="ops-executions-list" id="ops-executions-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 

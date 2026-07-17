@@ -199,6 +199,9 @@ function switchView(viewName) {
     } else if (viewName === 'architecture') {
         pageTitle.textContent = "System Architecture Engine";
         pageSubtitle.textContent = "Technical Design, AST Parsing & Database Schema Specifications";
+    } else if (viewName === 'ops') {
+        pageTitle.textContent = "System Operations";
+        pageSubtitle.textContent = "Production Health, Observability, & Agent Performance Metrics";
     }
     
     loadCurrentView();
@@ -208,6 +211,7 @@ function loadCurrentView() {
     if (currentView === 'dashboard') loadDashboard();
     if (currentView === 'explorer') loadExplorer();
     if (currentView === 'issues') loadIssues();
+    if (currentView === 'ops') loadOpsDashboard();
 }
 
 // --- Dashboard Telemetry & Charts ---
@@ -927,4 +931,172 @@ function finishLiveStream() {
 const liveAnalyzeBtn = document.getElementById('live-analyze-btn');
 if (liveAnalyzeBtn) {
     liveAnalyzeBtn.addEventListener('click', startLiveStreaming);
+}
+
+// --- System Operations Dashboard ---
+async function loadOpsDashboard() {
+    try {
+        const [healthRes, statsRes, historyRes] = await Promise.all([
+            fetch(`${window.location.origin}/api/v1/health`),
+            fetch(`${API_BASE}/dashboard/stats`, {headers: HEADERS()}),
+            fetch(`${API_BASE}/live/history`, {headers: HEADERS()})
+        ]);
+        
+        if (!healthRes.ok || !statsRes.ok) throw new Error("Failed to load ops data");
+        
+        const health = await healthRes.json();
+        const stats = await statsRes.json();
+        const historyData = historyRes.ok ? await historyRes.json() : {history: []};
+        
+        // 1. Pipeline Metrics Summary
+        const total = stats.total_reviews || 0;
+        const successRate = stats.github_success_rate || 0;
+        const successful = Math.floor((total * successRate) / 100);
+        const failed = total - successful;
+        
+        document.getElementById('ops-total-reviews').textContent = total;
+        document.getElementById('ops-success-reviews').textContent = successful;
+        document.getElementById('ops-failed-reviews').textContent = failed;
+        document.getElementById('ops-avg-time').textContent = (stats.avg_review_time || 0) + 's';
+        document.getElementById('ops-avg-health').textContent = (stats.avg_health_score || 0);
+        document.getElementById('ops-issues-found').textContent = `${stats.security_issues || 0} / ${(stats.quality_issues || 0) + (stats.logic_issues || 0)}`;
+
+        // 2. Health Cards
+        const healthGrid = document.getElementById('ops-health-cards');
+        if (healthGrid && health.services) {
+            const icons = {
+                'fastapi': 'zap',
+                'database': 'database',
+                'redis': 'layers',
+                'github': 'github',
+                'groq': 'cpu',
+                'langgraph': 'git-merge',
+                'tree-sitter': 'code'
+            };
+            
+            healthGrid.innerHTML = Object.entries(health.services).map(([key, data]) => {
+                const color = data.status === 'healthy' ? '#3fb950' : '#f85149';
+                const icon = icons[key] || 'server';
+                const name = key.charAt(0).toUpperCase() + key.slice(1);
+                const time = new Date(data.last_checked).toLocaleTimeString();
+                
+                return `
+                    <div class="workspace-card" style="padding: 1rem; border-left: 3px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="${icon}" style="width: 16px; height: 16px; color: #8b949e;"></i>
+                                <strong style="color: #c9d1d9;">${name}</strong>
+                            </div>
+                            <span style="font-size: 0.7rem; color: ${color}; text-transform: uppercase; font-weight: 600;">${data.status}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #8b949e; margin-top: 12px;">
+                            <span>${data.latency_ms} ms</span>
+                            <span>${time}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 3. Agent Performance (Simulated granular splits from total avg time)
+        const agentTbody = document.getElementById('ops-agent-tbody');
+        if (agentTbody) {
+            const avgTime = stats.avg_review_time || 2.5;
+            const runs = stats.total_reviews || 0;
+            const now = new Date().toLocaleTimeString();
+            
+            const agents = [
+                { name: "PR Fetcher", pct: 0.20, sr: 99.9 },
+                { name: "Security Agent", pct: 0.25, sr: 98.5 },
+                { name: "Quality Agent", pct: 0.20, sr: 99.0 },
+                { name: "Logic Agent", pct: 0.30, sr: 97.5 },
+                { name: "Review Orchestrator", pct: 0.05, sr: 100.0 }
+            ];
+            
+            agentTbody.innerHTML = agents.map(a => `
+                <tr style="border-bottom: 1px solid rgba(48,54,61,0.5);">
+                    <td style="padding: 12px 0; color: #c9d1d9;">${a.name}</td>
+                    <td style="padding: 12px 0; color: #8b949e;">${runs}</td>
+                    <td style="padding: 12px 0; color: #8b949e;">${(avgTime * a.pct).toFixed(2)}s</td>
+                    <td style="padding: 12px 0;"><span style="color: ${a.sr > 98 ? '#3fb950' : '#d29922'};">${a.sr}%</span></td>
+                    <td style="padding: 12px 0; color: #8b949e; font-size: 0.8rem;">${now}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 4. System Error Logs (Static/Mocked for demo as per plan)
+        const errorLog = document.getElementById('ops-error-log');
+        if (errorLog) {
+            const mockErrors = [
+                { time: new Date(Date.now() - 3600000).toLocaleTimeString(), srv: "github", lvl: "WARN", msg: "Rate limit threshold reached (80%)." },
+                { time: new Date(Date.now() - 86400000).toLocaleTimeString(), srv: "database", lvl: "ERROR", msg: "Connection pool exhausted; scaling up." },
+                { time: new Date(Date.now() - 172800000).toLocaleTimeString(), srv: "groq", lvl: "ERROR", msg: "Timeout parsing AST chunk." }
+            ];
+            
+            if (mockErrors.length > 0) {
+                errorLog.innerHTML = mockErrors.map(e => `
+                    <div style="margin-bottom: 8px; border-bottom: 1px dashed #30363d; padding-bottom: 8px;">
+                        <span style="color: #8b949e; margin-right: 8px;">[${e.time}]</span>
+                        <span style="color: ${e.lvl === 'ERROR' ? '#f85149' : '#d29922'}; margin-right: 8px;">[${e.lvl}]</span>
+                        <span style="color: #58a6ff; margin-right: 8px;">${e.srv}</span>
+                        <span style="color: #c9d1d9;">${e.msg}</span>
+                    </div>
+                `).join('');
+            } else {
+                errorLog.innerHTML = '<span style="color: #3fb950;">No recent errors.</span>';
+            }
+        }
+
+        // 5. Recent Executions & Timeline
+        const execList = document.getElementById('ops-executions-list');
+        if (execList && historyData.history) {
+            if (historyData.history.length === 0) {
+                execList.innerHTML = '<div style="color: #8b949e;">No recent executions.</div>';
+            } else {
+                execList.innerHTML = historyData.history.slice(0, 5).map((h, i) => {
+                    const durationStr = (stats.avg_review_time || 2.5).toFixed(1) + 's';
+                    const isApproved = h.decision === 'APPROVED';
+                    const color = isApproved ? '#3fb950' : (h.decision === 'CHANGES_REQUESTED' ? '#f85149' : '#d29922');
+                    
+                    return `
+                        <div class="ops-execution-item" style="border: 1px solid #30363d; border-radius: 6px; margin-bottom: 1rem; overflow: hidden;">
+                            <div style="padding: 12px; background: rgba(33,38,45,0.4); display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <span style="color: ${color};"><i data-lucide="${isApproved ? 'check-circle' : 'alert-triangle'}" style="width: 16px; height: 16px;"></i></span>
+                                    <strong style="color: #58a6ff;">${h.repo}#${h.pr_number}</strong>
+                                    <span style="color: #8b949e; font-size: 0.85rem;">Score: ${h.health_score}</span>
+                                    <span class="decision-badge ${h.decision}" style="font-size: 0.7rem; padding: 2px 6px;">${h.decision}</span>
+                                </div>
+                                <div style="display: flex; gap: 1rem; align-items: center; color: #8b949e; font-size: 0.85rem;">
+                                    <span>${durationStr}</span>
+                                    <span>${new Date(h.timestamp).toLocaleString()}</span>
+                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px;"></i>
+                                </div>
+                            </div>
+                            <div class="hidden" style="padding: 16px; border-top: 1px solid #30363d; background: #0d1117;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                                    <!-- Simple Timeline Graphic -->
+                                    <div style="position: absolute; top: 12px; left: 20px; right: 20px; height: 2px; background: #30363d; z-index: 0;"></div>
+                                    
+                                    ${['PR Received', 'AST Parsing', 'Security', 'Quality', 'Logic', 'Merge', 'Save'].map((step, idx) => `
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1; background: #0d1117; padding: 0 4px;">
+                                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #238636; border: 2px solid #0d1117; display: flex; align-items: center; justify-content: center;">
+                                                <i data-lucide="check" style="width: 12px; height: 12px; color: white;"></i>
+                                            </div>
+                                            <span style="font-size: 0.7rem; color: #8b949e;">${step}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+        
+        lucide.createIcons();
+
+    } catch (e) {
+        console.error("Ops dashboard load error:", e);
+    }
 }
