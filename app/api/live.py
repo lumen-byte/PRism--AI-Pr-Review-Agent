@@ -130,7 +130,20 @@ async def live_review_generator(repo_url: str, pr_number: int | None):
                         # Short delay for visual effect
                         await asyncio.sleep(0.3)
                     
-                    yield f"data: {json.dumps({'agent': agent_label, 'status': 'Issue Found', 'message': f'Found {len(findings)} issues.', 'type': 'warning', 'html_comment': '<ul>' + ''.join(f'<li>{f.get(\\'description\\')}</li>' for f in findings) + '</ul>'})}\n\n"
+                    list_items = []
+                    for f in findings:
+                        desc = f.get("description", "")
+                        list_items.append(f"<li>{desc}</li>")
+                    html_comment = "<ul>" + "".join(list_items) + "</ul>"
+                    
+                    data_payload = {
+                        "agent": agent_label,
+                        "status": "Issue Found",
+                        "message": f"Found {len(findings)} issues.",
+                        "type": "warning",
+                        "html_comment": html_comment
+                    }
+                    yield f"data: {json.dumps(data_payload)}\n\n"
                 else:
                     if node_name != "github_publisher":
                         yield f"data: {json.dumps({'agent': agent_label, 'status': 'Completed', 'message': 'Clean.', 'type': 'done'})}\n\n"
