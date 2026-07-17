@@ -147,9 +147,45 @@ if (heroCtaLiveBtn) {
 // Quick Demo Login for Recruiters
 if (quickDemoBtn) {
     quickDemoBtn.addEventListener('click', async () => {
-        document.getElementById('username').value = 'admin';
-        document.getElementById('password').value = 'PRismAdmin2026!';
-        loginForm.dispatchEvent(new Event('submit'));
+        // Perform login directly without relying on form dispatch
+        const originalHTML = quickDemoBtn.innerHTML;
+        quickDemoBtn.disabled = true;
+        quickDemoBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> <span>Authenticating...</span>';
+        lucide.createIcons();
+        loginError.classList.add('hidden');
+        
+        try {
+            const formData = new URLSearchParams();
+            formData.append('username', 'admin');
+            formData.append('password', 'PRismAdmin2026!');
+
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: formData
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                authToken = data.access_token;
+                localStorage.setItem('prism_token', authToken);
+                loginError.classList.add('hidden');
+                showApp();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                loginError.textContent = err.detail || 'Demo login failed. Please try again.';
+                loginError.classList.remove('hidden');
+                quickDemoBtn.disabled = false;
+                quickDemoBtn.innerHTML = originalHTML;
+                lucide.createIcons();
+            }
+        } catch (e) {
+            loginError.textContent = 'Network error. Is the backend running?';
+            loginError.classList.remove('hidden');
+            quickDemoBtn.disabled = false;
+            quickDemoBtn.innerHTML = originalHTML;
+            lucide.createIcons();
+        }
     });
 }
 
@@ -195,13 +231,20 @@ loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const u = document.getElementById('username').value;
     const p = document.getElementById('password').value;
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Authenticating...</span>';
+    }
+    loginError.classList.add('hidden');
     
     try {
         const formData = new URLSearchParams();
         formData.append('username', u);
         formData.append('password', p);
         
-        const res = await apiFetch(`${API_BASE}/auth/login`, {
+        const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: formData
@@ -213,10 +256,23 @@ loginForm.addEventListener('submit', async (e) => {
             loginError.classList.add('hidden');
             showApp();
         } else {
+            const err = await res.json().catch(() => ({}));
+            loginError.textContent = err.detail || 'Authentication failed. Check credentials.';
             loginError.classList.remove('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Authenticate</span><i data-lucide="arrow-right"></i>';
+                lucide.createIcons();
+            }
         }
     } catch (err) {
+        loginError.textContent = 'Network error. Cannot reach backend.';
         loginError.classList.remove('hidden');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Authenticate</span><i data-lucide="arrow-right"></i>';
+            lucide.createIcons();
+        }
     }
 });
 
