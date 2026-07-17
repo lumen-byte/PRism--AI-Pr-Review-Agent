@@ -154,14 +154,14 @@ async def database_lifespan(app: FastAPI):
             result = await session.execute(select(User).where(User.username == "admin"))
             admin = result.scalar_one_or_none()
             if not admin:
-                new_admin = User(
+                admin = User(
                     username="admin",
-                    hashed_password=get_password_hash("PRismAdmin2026!"),
                     role=UserRole.ADMIN,
                 )
-                session.add(new_admin)
-                await session.commit()
-                logger.info("Default admin user seeded successfully.")
+                session.add(admin)
+            admin.hashed_password = get_password_hash("PRismAdmin2026!")
+            await session.commit()
+            logger.info("Default admin user seeded/verified successfully.")
     except Exception as e:
         logger.error(f"Failed to seed default admin user: {e}")
 
