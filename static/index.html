@@ -134,11 +134,22 @@
                             Multi-agent system that reviews pull requests like a senior engineer.
                         </p>
                         
-                        <div class="demo-cta-wrapper">
-                            <button id="hero-cta-btn" class="btn-hero-cta">
-                                <i data-lucide="git-pull-request"></i>
-                                <span>Review Sample Pull Request</span>
-                                <i data-lucide="arrow-right"></i>
+                        <div class="demo-cta-wrapper dual-cta">
+                            <button id="hero-cta-demo-btn" class="btn-hero-cta option-card">
+                                <div class="option-icon"><i data-lucide="git-pull-request"></i></div>
+                                <div class="option-content">
+                                    <h3>Review Sample Pull Request</h3>
+                                    <p>Guided walkthrough demonstrating the complete AI review workflow.</p>
+                                </div>
+                                <div class="option-arrow"><i data-lucide="arrow-right"></i></div>
+                            </button>
+                            <button id="hero-cta-live-btn" class="btn-hero-cta option-card">
+                                <div class="option-icon"><i data-lucide="globe"></i></div>
+                                <div class="option-content">
+                                    <h3>Analyze GitHub Repository</h3>
+                                    <p>Run the real LangGraph pipeline against a public GitHub repository.</p>
+                                </div>
+                                <div class="option-arrow"><i data-lucide="arrow-right"></i></div>
                             </button>
                         </div>
                     </section>
@@ -432,6 +443,146 @@
                         <div class="workspace-card highlight-card">
                             <h3>Production Deployment</h3>
                             <p>Dockerized backend deployed with Render, PostgreSQL and Redis.</p>
+                        </div>
+                    </div>
+                </div>
+            <!-- Live Review View -->
+            <div id="view-live" class="view hidden">
+                <div class="recruiter-badge-container" style="padding: 1.5rem 1.5rem 0 1.5rem; text-align: center;">
+                    <span style="background: rgba(46, 160, 67, 0.15); color: #3fb950; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(46, 160, 67, 0.3);">LIVE</span>
+                    <div class="health-indicators" style="margin-top: 12px; display: flex; gap: 1rem; justify-content: center; font-size: 0.8rem; color: #8b949e;">
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check-circle" style="color:#3fb950; width:14px; height:14px;"></i> FastAPI</span>
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check-circle" style="color:#3fb950; width:14px; height:14px;"></i> LangGraph</span>
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check-circle" style="color:#3fb950; width:14px; height:14px;"></i> PostgreSQL</span>
+                        <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check-circle" style="color:#3fb950; width:14px; height:14px;"></i> Redis</span>
+                    </div>
+                </div>
+                
+                <div class="demo-workspace">
+                    <div class="workspace-left">
+                        <div class="workspace-header">
+                            <h2>Analyze GitHub Repository</h2>
+                        </div>
+                        <div class="workspace-card" style="padding: 1.5rem;">
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 8px; color: #8b949e; font-size: 0.9rem;">Repository URL</label>
+                                <input type="text" id="live-repo-url" style="width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3;" placeholder="https://github.com/owner/repository">
+                            </div>
+                            <div class="form-group">
+                                <label style="display: block; margin-bottom: 8px; color: #8b949e; font-size: 0.9rem;">Pull Request Number (Optional)</label>
+                                <input type="number" id="live-pr-number" style="width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3;" placeholder="Leave blank for latest PR">
+                            </div>
+                            <button id="live-analyze-btn" class="btn-primary" style="margin-top: 1.5rem; width: 100%; justify-content: center;">
+                                <i data-lucide="play"></i> Analyze
+                            </button>
+                            <div id="live-error-msg" style="color: #f85149; margin-top: 1rem; font-size: 0.9rem; display: none;"></div>
+                        </div>
+                        
+                        <div class="workspace-header" style="margin-top: 2rem;">
+                            <h2>Review History</h2>
+                        </div>
+                        <div class="workspace-card" style="padding: 1rem;" id="live-history-list">
+                            <!-- History populated via JS -->
+                        </div>
+                    </div>
+                    
+                    <div class="workspace-right">
+                        <div class="workspace-main">
+                            <div class="workspace-header">
+                                <h2>Live Review Pipeline</h2>
+                            </div>
+                            <div class="pipeline-cards-list">
+                                <!-- PR Fetcher -->
+                                <div class="workspace-card pipeline-stage" id="live-card-fetcher">
+                                    <div class="stage-header">
+                                        <div class="stage-icon"><i data-lucide="git-pull-request"></i></div>
+                                        <h3>PR Fetcher Agent</h3>
+                                        <span class="status-badge waiting" id="live-badge-fetcher">Waiting</span>
+                                    </div>
+                                    <div class="stage-messages" id="live-msg-fetcher"><p>Fetches GitHub PR and parses repository metadata.</p></div>
+                                </div>
+                                <!-- Security Agent -->
+                                <div class="workspace-card pipeline-stage" id="live-card-security">
+                                    <div class="stage-header">
+                                        <div class="stage-icon"><i data-lucide="shield"></i></div>
+                                        <h3>Security Agent</h3>
+                                        <span class="status-badge waiting" id="live-badge-security">Waiting</span>
+                                    </div>
+                                    <div class="stage-messages" id="live-msg-security"><p>Searches for vulnerabilities and secrets.</p></div>
+                                </div>
+                                <!-- Code Quality Agent -->
+                                <div class="workspace-card pipeline-stage" id="live-card-quality">
+                                    <div class="stage-header">
+                                        <div class="stage-icon"><i data-lucide="check-circle"></i></div>
+                                        <h3>Code Quality Agent</h3>
+                                        <span class="status-badge waiting" id="live-badge-quality">Waiting</span>
+                                    </div>
+                                    <div class="stage-messages" id="live-msg-quality"><p>Checks complexity, style and maintainability.</p></div>
+                                </div>
+                                <!-- Logic Agent -->
+                                <div class="workspace-card pipeline-stage" id="live-card-logic">
+                                    <div class="stage-header">
+                                        <div class="stage-icon"><i data-lucide="cpu"></i></div>
+                                        <h3>Logic Agent</h3>
+                                        <span class="status-badge waiting" id="live-badge-logic">Waiting</span>
+                                    </div>
+                                    <div class="stage-messages" id="live-msg-logic"><p>Finds logical errors and risky code paths.</p></div>
+                                </div>
+                                <!-- Review Orchestrator -->
+                                <div class="workspace-card pipeline-stage" id="live-card-orchestrator">
+                                    <div class="stage-header">
+                                        <div class="stage-icon"><i data-lucide="git-merge"></i></div>
+                                        <h3>Review Orchestrator</h3>
+                                        <span class="status-badge waiting" id="live-badge-orchestrator">Waiting</span>
+                                    </div>
+                                    <div class="stage-messages" id="live-msg-orchestrator"><p>Combines findings and prepares GitHub review.</p></div>
+                                </div>
+                            </div>
+                            
+                            <div class="workspace-header" style="margin-top: 2rem;">
+                                <h2>Live Findings</h2>
+                            </div>
+                            <div id="live-comments-container">
+                                <div class="workspace-card placeholder-card" id="live-comments-placeholder">
+                                    <p>No findings generated yet.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="workspace-sidebar">
+                            <div class="workspace-header">
+                                <h2>Live Final Review</h2>
+                            </div>
+                            <div class="workspace-card metrics-card">
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Critical Issues</span>
+                                    <span class="metric-val" id="live-metric-critical">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Warnings</span>
+                                    <span class="metric-val" id="live-metric-warnings">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Files Analyzed</span>
+                                    <span class="metric-val" id="live-metric-files">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Languages</span>
+                                    <span class="metric-val" id="live-metric-languages">--</span>
+                                </div>
+                                <div class="metric-row" style="margin-top: 12px; border-top: 1px solid #30363d; padding-top: 12px;">
+                                    <span class="metric-lbl">Review Duration</span>
+                                    <span class="metric-val" id="live-metric-time">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Health Score</span>
+                                    <span class="metric-val" id="live-metric-health">--</span>
+                                </div>
+                                <div class="metric-row" style="margin-top: 12px;">
+                                    <span class="metric-lbl" style="font-weight: 600;">Decision</span>
+                                    <span class="metric-val" id="live-metric-decision" style="font-weight: 700;">Waiting...</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

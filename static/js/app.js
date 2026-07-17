@@ -47,13 +47,34 @@ const heroCtaBtn = document.getElementById('hero-cta-btn');
 const demoScenarioSelect = document.getElementById('demo-scenario-select');
 const demoBtnText = document.getElementById('demo-btn-text');
 
-// Primary CTA Navigation to Demo Pipeline
+const heroCtaDemoBtn = document.getElementById('hero-cta-demo-btn');
+const heroCtaLiveBtn = document.getElementById('hero-cta-live-btn');
+
 let demoEventSource = null;
-if (heroCtaBtn) {
-    heroCtaBtn.addEventListener('click', () => {
+let liveEventSource = null;
+
+if (heroCtaDemoBtn) {
+    heroCtaDemoBtn.addEventListener('click', () => {
         const pipelineNavItem = document.querySelector('.nav-item[data-view="pipeline"]');
         if (pipelineNavItem) pipelineNavItem.click();
         startDemoStreaming();
+    });
+}
+
+if (heroCtaLiveBtn) {
+    heroCtaLiveBtn.addEventListener('click', () => {
+        // Change view to view-live
+        views.forEach(v => v.classList.add('hidden'));
+        const liveView = document.getElementById('view-live');
+        if (liveView) liveView.classList.remove('hidden');
+        
+        // Remove active class from all nav items since this isn't in nav yet (or handle active state if needed)
+        navItems.forEach(item => item.classList.remove('active'));
+        
+        pageTitle.textContent = 'Live Analysis';
+        pageSubtitle.textContent = 'Executing real-time LangGraph pipeline';
+        
+        loadLiveHistory();
     });
 }
 
@@ -709,3 +730,201 @@ function debounce(func, timeout = 300){
     };
 }
 
+// --- Live Review Mode ---
+async function loadLiveHistory() {
+    const listEl = document.getElementById('live-history-list');
+    if (!listEl) return;
+    
+    try {
+        const res = await fetch(`${API_BASE}/live/history`, {headers: HEADERS()});
+        if (!res.ok) throw new Error('Failed to load history');
+        const data = await res.json();
+        
+        if (data.history.length === 0) {
+            listEl.innerHTML = '<div style="color: #8b949e; text-align: center; padding: 1rem 0;">No recent live reviews</div>';
+            return;
+        }
+        
+        listEl.innerHTML = data.history.map(h => `
+            <div class="history-item" style="padding: 12px; border-bottom: 1px solid #30363d; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(88,166,255,0.1)'" onmouseout="this.style.background='transparent'">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <strong style="color: #58a6ff;">${h.repo}#${h.pr_number}</strong>
+                    <span class="decision-badge ${h.decision}" style="font-size: 0.7rem; padding: 2px 6px;">${h.decision}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #8b949e;">
+                    <span>Score: ${h.health_score}/100</span>
+                    <span>${new Date(h.timestamp).toLocaleString()}</span>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (e) {
+        listEl.innerHTML = '<div style="color: #f85149; text-align: center; padding: 1rem 0;">Error loading history</div>';
+    }
+}
+
+function resetLiveUI() {
+    const initialDesc = {
+        "fetcher": "Fetches GitHub PR and parses repository metadata.",
+        "security": "Searches for vulnerabilities and secrets.",
+        "quality": "Checks complexity, style and maintainability.",
+        "logic": "Finds logical errors and risky code paths.",
+        "orchestrator": "Combines findings and prepares GitHub review."
+    };
+    
+    Object.keys(initialDesc).forEach(id => {
+        const badge = document.getElementById(`live-badge-${id}`);
+        if (badge) {
+            badge.textContent = "Waiting";
+            badge.className = "status-badge waiting";
+        }
+        const msg = document.getElementById(`live-msg-${id}`);
+        if (msg) {
+            msg.innerHTML = `<p>${initialDesc[id]}</p>`;
+        }
+    });
+
+    const commentsContainer = document.getElementById('live-comments-container');
+    if (commentsContainer) {
+        commentsContainer.innerHTML = `
+            <div class="workspace-card placeholder-card" id="live-comments-placeholder">
+                <p>No findings generated yet.</p>
+            </div>
+        `;
+    }
+
+    const metrics = ['critical', 'warnings', 'files', 'languages', 'time', 'health'];
+    metrics.forEach(m => {
+        const el = document.getElementById(`live-metric-${m}`);
+        if (el) el.textContent = '--';
+    });
+    
+    const decision = document.getElementById('live-metric-decision');
+    if (decision) {
+        decision.textContent = 'Waiting...';
+        decision.style.color = '#e6edf3';
+    }
+}
+
+function startLiveStreaming() {
+    const repoUrl = document.getElementById('live-repo-url').value.trim();
+    const prNumber = document.getElementById('live-pr-number').value.trim();
+    const errorMsg = document.getElementById('live-error-msg');
+    
+    if (!repoUrl) {
+        errorMsg.textContent = 'Repository URL is required.';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    errorMsg.style.display = 'none';
+    
+    document.getElementById('live-analyze-btn').disabled = true;
+    document.getElementById('live-analyze-btn').innerHTML = '<i data-lucide="loader" class="spin"></i> Analyzing...';
+    lucide.createIcons();
+    
+    resetLiveUI();
+
+    if (liveEventSource) {
+        liveEventSource.close();
+    }
+
+    const url = new URL(`${window.location.origin}${API_BASE}/live/stream`);
+    url.searchParams.append('repo_url', repoUrl);
+    if (prNumber) {
+        url.searchParams.append('pr_number', prNumber);
+    }
+
+    liveEventSource = new EventSource(url);
+    const completedAgents = new Set();
+    
+    const agentMap = {
+        "PR Fetcher": "fetcher",
+        "Security Agent": "security",
+        "Code Quality Agent": "quality",
+        "Logic Agent": "logic",
+        "Review Orchestrator": "orchestrator"
+    };
+
+    liveEventSource.onmessage = (e) => {
+        const event = JSON.parse(e.data);
+        const agentId = agentMap[event.agent];
+        
+        if (agentId) {
+            const badge = document.getElementById(`live-badge-${agentId}`);
+            if (badge) {
+                badge.textContent = event.status;
+                badge.className = `status-badge ${event.status.toLowerCase().replace(' ', '-')}`;
+                if (event.type === 'critical') badge.classList.add('issue-found');
+            }
+
+            const msgContainer = document.getElementById(`live-msg-${agentId}`);
+            if (msgContainer && event.message) {
+                if (msgContainer.querySelector('p')) {
+                    msgContainer.innerHTML = '';
+                }
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${event.type}`;
+                logEntry.textContent = event.message;
+                msgContainer.appendChild(logEntry);
+            }
+        }
+
+        if (event.html_comment) {
+            const container = document.getElementById('live-comments-container');
+            const placeholder = document.getElementById('live-comments-placeholder');
+            if (placeholder) placeholder.remove();
+
+            const comment = document.createElement('div');
+            comment.className = 'workspace-card gh-comment-card';
+            comment.innerHTML = `
+                <div class="gh-comment-header">
+                    <i data-lucide="github" style="width:16px;height:16px;"></i>
+                    <span>${event.agent} (PRism Bot)</span>
+                </div>
+                <div class="gh-comment-body">
+                    ${event.html_comment}
+                </div>
+            `;
+            container.appendChild(comment);
+            lucide.createIcons();
+        }
+
+        if (event.final_summary) {
+            const metrics = event.metrics || {};
+            document.getElementById('live-metric-critical').textContent = metrics.critical ?? '--';
+            document.getElementById('live-metric-warnings').textContent = metrics.warnings ?? '--';
+            document.getElementById('live-metric-files').textContent = metrics.files ?? '--';
+            document.getElementById('live-metric-languages').textContent = metrics.languages ?? '--';
+            document.getElementById('live-metric-time').textContent = metrics.time ?? '--';
+            document.getElementById('live-metric-health').textContent = metrics.health ?? '--';
+            
+            const decision = document.getElementById('live-metric-decision');
+            decision.textContent = metrics.decision ?? 'UNKNOWN';
+            decision.style.color = metrics.decision === 'APPROVED' ? '#3fb950' : '#f85149';
+            
+            finishLiveStream();
+        } else if (event.type === 'critical' && event.status === 'Error') {
+            finishLiveStream();
+        }
+    };
+
+    liveEventSource.onerror = () => {
+        finishLiveStream();
+    };
+}
+
+function finishLiveStream() {
+    if (liveEventSource) liveEventSource.close();
+    const btn = document.getElementById('live-analyze-btn');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="play"></i> Analyze Again';
+        lucide.createIcons();
+    }
+    loadLiveHistory();
+}
+
+const liveAnalyzeBtn = document.getElementById('live-analyze-btn');
+if (liveAnalyzeBtn) {
+    liveAnalyzeBtn.addEventListener('click', startLiveStreaming);
+}

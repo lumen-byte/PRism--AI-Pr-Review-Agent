@@ -76,6 +76,20 @@ class GitHubClient:
     @retry(
         stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10)
     )
+    async def get_latest_pull_request(self, owner: str, repo: str) -> Optional[int]:
+        try:
+            res = await self._request("GET", f"/repos/{owner}/{repo}/pulls?state=open&sort=created&direction=desc&per_page=1")
+            data = res.json()
+            if data and len(data) > 0:
+                return data[0]["number"]
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch latest open PR for {owner}/{repo}: {e}")
+            return None
+
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10)
+    )
     async def get_pull_request_files(
         self, owner: str, repo: str, pr_number: int
     ) -> List[ChangedFile]:

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, dashboard, demo, health, webhook
+from app.api import auth, dashboard, demo, health, webhook, live
 from app.config.settings import settings
 from app.core import metrics
 from app.core.exceptions import setup_exception_handlers
@@ -40,6 +40,7 @@ api_router = APIRouter()
 api_router.include_router(webhook.router, prefix="/webhook", tags=["webhook"])
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(demo.router, prefix="/demo", tags=["demo"])
+api_router.include_router(live.router, prefix="/live", tags=["live"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
