@@ -54,6 +54,62 @@ async def login(
     }
 
 
+@router.get("/demo-access", response_class=HTMLResponse)
+async def demo_access(db: AsyncSession = Depends(get_db)):
+    """One-click recruiter demo access endpoint.
+    
+    Returns an HTML page that sets the JWT token in localStorage
+    and redirects to the dashboard — no client-side JS login flow needed.
+    """
+    result = await db.execute(select(User).where(User.username == "admin"))
+    admin = result.scalar_one_or_none()
+    if not admin:
+        return HTMLResponse(content="<h1>Demo user not found. Please contact support.</h1>", status_code=404)
+
+    access_token = create_access_token(subject=admin.username, role=admin.role.name)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRism — Loading Demo...</title>
+    <style>
+        body {{
+            background: #0f1117;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            gap: 16px;
+        }}
+        .spinner {{
+            width: 40px; height: 40px;
+            border: 3px solid rgba(99,102,241,0.2);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }}
+        @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
+        p {{ color: #8b92a5; font-size: 0.95rem; }}
+    </style>
+</head>
+<body>
+    <div class="spinner"></div>
+    <p>Loading PRism Demo...</p>
+    <script>
+        localStorage.setItem('prism_token', '{access_token}');
+        window.location.replace('/dashboard');
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
+
+
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
     try:
