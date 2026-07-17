@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:3000/api/v1/auth/google/callback"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
