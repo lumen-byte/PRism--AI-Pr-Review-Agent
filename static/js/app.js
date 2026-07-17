@@ -13,6 +13,72 @@ const HEADERS = () => ({
     'Content-Type': 'application/json'
 });
 
+// --- Utilities & Security ---
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function showToast(message, type = 'error') {
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    const bgColor = type === 'error' ? '#f85149' : (type === 'success' ? '#3fb950' : '#3b82f6');
+    toast.style.cssText = `background: ${bgColor}; color: white; padding: 12px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 0.9rem; font-weight: 500; animation: slideUp 0.3s ease-out; display: flex; align-items: center; gap: 8px;`;
+    
+    // Fallback if lucide isn't loaded yet
+    const iconStr = type === 'error' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' : 
+                    (type === 'success' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>' : '');
+    
+    toast.innerHTML = `${iconStr} <span>${escapeHTML(message)}</span>`;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+async function apiFetch(endpoint, options = {}) {
+    try {
+        const res = await apiFetch(endpoint, options);
+        if (res.status === 401) {
+            logoutBtn.click();
+            throw new Error("Unauthorized");
+        }
+        if (!res.ok) {
+            let errorMsg = `API Error: ${res.status}`;
+            try {
+                const data = await res.json();
+                if (data.detail) errorMsg = data.detail;
+            } catch (e) {} // Not JSON
+            throw new Error(errorMsg);
+        }
+        return res;
+    } catch (err) {
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+            showToast("Network error. Check your connection or backend status.", "error");
+            throw new Error("Network connection failed.");
+        }
+        if (err.message !== "Unauthorized") {
+            showToast(err.message, "error");
+        }
+        throw err;
+    }
+}
+
 // --- Elements ---
 const loginOverlay = document.getElementById('login-overlay');
 const appContainer = document.getElementById('app-container');
@@ -101,7 +167,7 @@ if (runDemoBtn) {
         startPipelineAnimation(scenario);
 
         try {
-            const res = await fetch(`${API_BASE}/demo/run`, {
+            const res = await apiFetch(`${API_BASE}/demo/run`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ scenario: scenario })
@@ -135,7 +201,7 @@ loginForm.addEventListener('submit', async (e) => {
         formData.append('username', u);
         formData.append('password', p);
         
-        const res = await fetch(`${API_BASE}/auth/login`, {
+        const res = await apiFetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: formData
@@ -218,8 +284,8 @@ function loadCurrentView() {
 async function loadDashboard() {
     try {
         const [statsRes, metricsRes] = await Promise.all([
-            fetch(`${API_BASE}/dashboard/stats`, {headers: HEADERS()}),
-            fetch(`${API_BASE}/dashboard/metrics`, {headers: HEADERS()})
+            apiFetch(`${API_BASE}/dashboard/stats`, {headers: HEADERS()}),
+            apiFetch(`${API_BASE}/dashboard/metrics`, {headers: HEADERS()})
         ]);
         
         if (statsRes.status === 401) return logoutBtn.click();
@@ -503,7 +569,7 @@ function startPipelineAnimation(scenario) {
             }
             const msg = document.getElementById(`msg-${id}`);
             if (msg) {
-                msg.innerHTML = `<p>${initialDesc[id]}</p>`;
+                msg.innerHTML = `<p>${escapeHTML(initialDesc[id])}</p>`;
             }
         });
 
@@ -567,37 +633,48 @@ async function loadExplorer() {
     if (repo) url += `&repo=${repo}`;
     if (status) url += `&status=${status}`;
     
-    const res = await fetch(url, {headers: HEADERS()});
-    if (!res.ok) return;
-    const data = await res.json();
-    
-    pageIndicator.textContent = `Page ${data.page} of ${data.pages}`;
-    btnPrev.disabled = data.page <= 1;
-    btnNext.disabled = data.page >= data.pages;
-    
-    reviewsTbody.innerHTML = '';
-    data.items.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>${r.repo_name}</strong></td>
-            <td><a href="#" style="color:var(--brand-primary); font-weight:600;">#${r.pr_number}</a></td>
-            <td>${r.author}</td>
-            <td><span class="decision-badge ${r.health_score > 80 ? 'APPROVED' : r.health_score > 50 ? 'COMMENTED' : 'CHANGES_REQUESTED'}">${r.health_score} / 100</span></td>
-            <td><span class="decision-badge ${r.decision}">${r.decision}</span></td>
-            <td>${new Date(r.reviewed_at).toLocaleString()}</td>
-            <td style="display:flex; gap:6px;">
-                <button class="btn-secondary btn-sm" onclick="openReviewDetails('${r.id}')"><i data-lucide="eye" style="width:14px;"></i> Details</button>
-                <button class="btn-secondary btn-sm" style="border-color:#30363d;" onclick="openGitHubPreview('${r.id}')"><i data-lucide="github" style="width:14px;"></i> GH Preview</button>
-            </td>
-        `;
-        reviewsTbody.appendChild(tr);
-    });
+    reviewsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i data-lucide="loader" class="spin" style="margin-right: 8px;"></i> Loading reviews...</td></tr>';
     lucide.createIcons();
+
+    try {
+        const res = await apiFetch(url, {headers: HEADERS()});
+        const data = await res.json();
+        
+        pageIndicator.textContent = data.pages > 0 ? `Page ${data.page} of ${data.pages}` : 'No Results';
+        btnPrev.disabled = data.page <= 1;
+        btnNext.disabled = data.page >= data.pages;
+        
+        reviewsTbody.innerHTML = '';
+        if (data.items.length === 0) {
+            reviewsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No reviews found matching the criteria.</td></tr>';
+            return;
+        }
+
+        data.items.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${escapeHTML(r.repo_name)}</strong></td>
+                <td><a href="#" style="color:var(--brand-primary); font-weight:600;">#${r.pr_number}</a></td>
+                <td>${escapeHTML(r.author)}</td>
+                <td><span class="decision-badge ${r.health_score > 80 ? 'APPROVED' : r.health_score > 50 ? 'COMMENTED' : 'CHANGES_REQUESTED'}">${r.health_score} / 100</span></td>
+                <td><span class="decision-badge ${r.decision}">${r.decision}</span></td>
+                <td>${new Date(r.reviewed_at).toLocaleString()}</td>
+                <td style="display:flex; gap:6px;">
+                    <button class="btn-secondary btn-sm" onclick="openReviewDetails('${r.id}')" aria-label="View Review Details"><i data-lucide="eye" style="width:14px;"></i> Details</button>
+                    <button class="btn-secondary btn-sm" style="border-color:#30363d;" onclick="openGitHubPreview('${r.id}')" aria-label="GitHub Preview"><i data-lucide="github" style="width:14px;"></i> GH Preview</button>
+                </td>
+            `;
+            reviewsTbody.appendChild(tr);
+        });
+        lucide.createIcons();
+    } catch (e) {
+        reviewsTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--color-danger);">Failed to load reviews.</td></tr>';
+    }
 }
 
 // --- GitHub Native Render Preview Modal ---
 async function openGitHubPreview(id) {
-    const res = await fetch(`${API_BASE}/dashboard/reviews/${id}`, {headers: HEADERS()});
+    const res = await apiFetch(`${API_BASE}/dashboard/reviews/${id}`, {headers: HEADERS()});
     if (!res.ok) return;
     const r = await res.json();
 
@@ -610,7 +687,7 @@ async function openGitHubPreview(id) {
             <i data-lucide="${decisionIcon}"></i>
             <div>
                 <strong>@prism-ai-agent[bot]</strong> ${decisionLabel}
-                <div style="font-size:0.8rem; color:#8b949e;">Automated multi-agent code inspection for PR #${r.pr_number} (${r.repo_name})</div>
+                <div style="font-size:0.8rem; color:#8b949e;">Automated multi-agent code inspection for PR #${r.pr_number} (${escapeHTML(r.repo_name)})</div>
             </div>
         </div>
 
@@ -661,41 +738,52 @@ ghModalClose?.addEventListener('click', () => ghModal.classList.add('hidden'));
 
 // --- Issues ---
 async function loadIssues() {
-    const res = await fetch(`${API_BASE}/dashboard/issues`, {headers: HEADERS()});
-    if (!res.ok) return;
-    const issues = await res.json();
-    
-    issuesTbody.innerHTML = '';
-    issues.forEach(i => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><strong>#${i.pr_number}</strong></td>
-            <td><code style="color:#818cf8; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${i.file_path}:${i.line_number}</code></td>
-            <td><span class="decision-badge ${i.severity}">${i.severity}</span></td>
-            <td><strong>${i.category}</strong></td>
-            <td><span class="version-badge" style="background:rgba(16,185,129,0.15); color:#10b981;">95% Confidence</span></td>
-            <td>
-                <div>${i.text}</div>
-                <div class="code-fix-block" style="margin-top:6px;">
-                    <span style="color:#818cf8; font-size:0.75rem;">Suggested Fix:</span>
-                    <div style="font-family:'Fira Code', monospace; color:#34d399; font-size:0.78rem; margin-top:2px;">
-                        + # Safe AST parameterized implementation applied natively
+    issuesTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i data-lucide="loader" class="spin" style="margin-right: 8px;"></i> Loading issues...</td></tr>';
+    lucide.createIcons();
+
+    try {
+        const res = await apiFetch(`${API_BASE}/dashboard/issues`, {headers: HEADERS()});
+        const issues = await res.json();
+        
+        issuesTbody.innerHTML = '';
+        if (issues.length === 0) {
+            issuesTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">No issues found in the codebase.</td></tr>';
+            return;
+        }
+
+        issues.forEach(i => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>#${i.pr_number}</strong></td>
+                <td><code style="color:#818cf8; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px;">${escapeHTML(i.file_path)}:${i.line_number}</code></td>
+                <td><span class="decision-badge ${i.severity}">${i.severity}</span></td>
+                <td><strong>${i.category}</strong></td>
+                <td><span class="version-badge" style="background:rgba(16,185,129,0.15); color:#10b981;">95% Confidence</span></td>
+                <td>
+                    <div>${escapeHTML(i.text)}</div>
+                    <div class="code-fix-block" style="margin-top:6px;">
+                        <span style="color:#818cf8; font-size:0.75rem;">Suggested Fix:</span>
+                        <div style="font-family:'Fira Code', monospace; color:#34d399; font-size:0.78rem; margin-top:2px;">
+                            + # Safe AST parameterized implementation applied natively
+                        </div>
                     </div>
-                </div>
-            </td>
-        `;
-        issuesTbody.appendChild(tr);
-    });
+                </td>
+            `;
+            issuesTbody.appendChild(tr);
+        });
+    } catch (e) {
+        issuesTbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--color-danger);">Failed to load issues.</td></tr>';
+    }
 }
 
 // --- Review Modal ---
 async function openReviewDetails(id) {
-    const res = await fetch(`${API_BASE}/dashboard/reviews/${id}`, {headers: HEADERS()});
+    const res = await apiFetch(`${API_BASE}/dashboard/reviews/${id}`, {headers: HEADERS()});
     if (!res.ok) return;
     const r = await res.json();
     
     document.getElementById('modal-pr-title').textContent = r.pr_title;
-    document.getElementById('modal-pr-subtitle').textContent = `${r.owner}/${r.repo_name}#${r.pr_number} by ${r.author}`;
+    document.getElementById('modal-pr-subtitle').textContent = `${r.owner}/${escapeHTML(r.repo_name)}#${r.pr_number} by ${escapeHTML(r.author)}`;
     document.getElementById('modal-score').textContent = r.health_score;
     document.getElementById('modal-decision').textContent = r.decision;
     document.getElementById('modal-decision').className = `value decision-badge ${r.decision}`;
@@ -740,7 +828,7 @@ async function loadLiveHistory() {
     if (!listEl) return;
     
     try {
-        const res = await fetch(`${API_BASE}/live/history`, {headers: HEADERS()});
+        const res = await apiFetch(`${API_BASE}/live/history`, {headers: HEADERS()});
         if (!res.ok) throw new Error('Failed to load history');
         const data = await res.json();
         
@@ -752,7 +840,7 @@ async function loadLiveHistory() {
         listEl.innerHTML = data.history.map(h => `
             <div class="history-item" style="padding: 12px; border-bottom: 1px solid #30363d; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(88,166,255,0.1)'" onmouseout="this.style.background='transparent'">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <strong style="color: #58a6ff;">${h.repo}#${h.pr_number}</strong>
+                    <strong style="color: #58a6ff;">${escapeHTML(h.repo)}#${escapeHTML(h.pr_number)}</strong>
                     <span class="decision-badge ${h.decision}" style="font-size: 0.7rem; padding: 2px 6px;">${h.decision}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #8b949e;">
@@ -784,7 +872,7 @@ function resetLiveUI() {
         }
         const msg = document.getElementById(`live-msg-${id}`);
         if (msg) {
-            msg.innerHTML = `<p>${initialDesc[id]}</p>`;
+            msg.innerHTML = `<p>${escapeHTML(initialDesc[id])}</p>`;
         }
     });
 
@@ -937,9 +1025,9 @@ if (liveAnalyzeBtn) {
 async function loadOpsDashboard() {
     try {
         const [healthRes, statsRes, historyRes] = await Promise.all([
-            fetch(`${window.location.origin}/api/v1/health`),
-            fetch(`${API_BASE}/dashboard/stats`, {headers: HEADERS()}),
-            fetch(`${API_BASE}/live/history`, {headers: HEADERS()})
+            apiFetch(`${window.location.origin}/api/v1/health`),
+            apiFetch(`${API_BASE}/dashboard/stats`, {headers: HEADERS()}),
+            apiFetch(`${API_BASE}/live/history`, {headers: HEADERS()})
         ]);
         
         if (!healthRes.ok || !statsRes.ok) throw new Error("Failed to load ops data");
@@ -1039,7 +1127,7 @@ async function loadOpsDashboard() {
                         <span style="color: #8b949e; margin-right: 8px;">[${e.time}]</span>
                         <span style="color: ${e.lvl === 'ERROR' ? '#f85149' : '#d29922'}; margin-right: 8px;">[${e.lvl}]</span>
                         <span style="color: #58a6ff; margin-right: 8px;">${e.srv}</span>
-                        <span style="color: #c9d1d9;">${e.msg}</span>
+                        <span style="color: #c9d1d9;">${escapeHTML(e.msg)}</span>
                     </div>
                 `).join('');
             } else {
@@ -1063,7 +1151,7 @@ async function loadOpsDashboard() {
                             <div style="padding: 12px; background: rgba(33,38,45,0.4); display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="this.nextElementSibling.classList.toggle('hidden')">
                                 <div style="display: flex; gap: 1rem; align-items: center;">
                                     <span style="color: ${color};"><i data-lucide="${isApproved ? 'check-circle' : 'alert-triangle'}" style="width: 16px; height: 16px;"></i></span>
-                                    <strong style="color: #58a6ff;">${h.repo}#${h.pr_number}</strong>
+                                    <strong style="color: #58a6ff;">${escapeHTML(h.repo)}#${escapeHTML(h.pr_number)}</strong>
                                     <span style="color: #8b949e; font-size: 0.85rem;">Score: ${h.health_score}</span>
                                     <span class="decision-badge ${h.decision}" style="font-size: 0.7rem; padding: 2px 6px;">${h.decision}</span>
                                 </div>

@@ -85,7 +85,7 @@
                     <span class="status-pulse"></span>
                     <span>LangGraph Engine Active</span>
                 </div>
-                <button id="logout-btn" class="btn-icon" title="Logout">
+                <button id="logout-btn" class="btn-icon" title="Logout" aria-label="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
             </div>
@@ -478,7 +478,7 @@
                             <button id="live-analyze-btn" class="btn-primary" style="margin-top: 1.5rem; width: 100%; justify-content: center;">
                                 <i data-lucide="play"></i> Analyze
                             </button>
-                            <div id="live-error-msg" style="color: #f85149; margin-top: 1rem; font-size: 0.9rem; display: none;"></div>
+                            <div id="live-error-msg" style="color: #f85149; margin-top: 1rem; font-size: 0.9rem; display: none;" aria-live="polite"></div>
                         </div>
                         
                         <div class="workspace-header" style="margin-top: 2rem;">
@@ -629,9 +629,9 @@
                     </div>
                     
                     <div class="pagination">
-                        <button id="btn-prev" class="btn-icon" disabled><i data-lucide="chevron-left"></i></button>
+                        <button id="btn-prev" class="btn-icon" disabled aria-label="Previous Page"><i data-lucide="chevron-left"></i></button>
                         <span id="page-indicator">Page 1</span>
-                        <button id="btn-next" class="btn-icon"><i data-lucide="chevron-right"></i></button>
+                        <button id="btn-next" class="btn-icon" aria-label="Next Page"><i data-lucide="chevron-right"></i></button>
                     </div>
                 </div>
             </div>
@@ -828,7 +828,7 @@
                     <h2 id="modal-pr-title">PR Title</h2>
                     <span id="modal-pr-subtitle" class="subtitle">repo#pr by author</span>
                 </div>
-                <button id="modal-close" class="btn-icon"><i data-lucide="x"></i></button>
+                <button id="modal-close" class="btn-icon" aria-label="Close Modal"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="modal-kpi-row">
@@ -869,7 +869,7 @@
                     <i data-lucide="github"></i>
                     <span>GitHub Native Review Render</span>
                 </div>
-                <button id="gh-preview-close" class="btn-icon"><i data-lucide="x"></i></button>
+                <button id="gh-preview-close" class="btn-icon" aria-label="Close GitHub Preview"><i data-lucide="x"></i></button>
             </div>
             <div class="gh-modal-body" id="gh-preview-body">
                 <!-- Rendered exactly like GitHub's dark theme PR review layout -->
