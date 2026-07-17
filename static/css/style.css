@@ -1071,7 +1071,7 @@ h1, h2, h3 {
 .demo-workspace {
     display: flex;
     flex-direction: row;
-    height: calc(100vh - 80px); /* adjust based on topbar */
+    min-height: calc(100vh - 80px); /* adjust based on topbar */
     gap: 1.5rem;
     padding: 1.5rem;
     background: #0d1117;
@@ -1375,4 +1375,133 @@ h1, h2, h3 {
 }
 .gh-comment-body strong {
     color: #f85149;
+}
+
+/* Architecture Showcase */
+.architecture-showcase {
+    max-width: 1000px;
+    margin: 4rem auto;
+    padding: 2rem;
+    color: #c9d1d9;
+}
+
+.showcase-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.showcase-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #e6edf3;
+    margin-bottom: 0.5rem;
+}
+
+.showcase-header p {
+    color: #8b949e;
+}
+
+.arch-flow-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+}
+
+.flow-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-weight: 500;
+    width: 280px;
+    justify-content: center;
+}
+
+.flow-step i {
+    width: 18px;
+    height: 18px;
+    color: #8b949e;
+}
+
+.flow-arrow {
+    padding: 12px 0;
+    color: #30363d;
+}
+
+.flow-arrow i {
+    width: 20px;
+    height: 20px;
+}
+
+/* Tech Stack */
+.tech-stack-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.tech-category {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.tech-category h3 {
+    font-size: 1rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.tech-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tech-badge {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #c9d1d9;
+}
+
+/* Highlights Grid */
+.highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.highlight-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.highlight-card h3 {
+    color: #58a6ff;
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+
+.highlight-card p {
+    color: #8b949e;
+    line-height: 1.5;
+    font-size: 0.95rem;
 }

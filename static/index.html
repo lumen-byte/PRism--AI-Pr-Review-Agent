@@ -225,6 +225,10 @@
 
             <!-- Live Pipeline View -->
             <div id="view-pipeline" class="view hidden">
+                <div class="recruiter-badge-container" style="padding: 1.5rem 1.5rem 0 1.5rem; text-align: center;">
+                    <span style="background: rgba(88, 166, 255, 0.15); color: #58a6ff; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; border: 1px solid rgba(88, 166, 255, 0.3);">Sample Demonstration</span>
+                    <p style="color: #8b949e; font-size: 0.85rem; margin-top: 8px;">This demo uses a preloaded pull request so every reviewer experiences the complete workflow consistently.</p>
+                </div>
                 <div class="demo-workspace">
                     <div class="workspace-left">
                         <div class="workspace-header">
@@ -254,7 +258,6 @@
                         <div class="workspace-main">
                             <div class="workspace-header" style="display: flex; justify-content: space-between; align-items: center;">
                                 <h2>AI Review Pipeline</h2>
-                                <button id="reset-demo-btn" class="btn-secondary hidden" style="padding: 4px 12px; font-size: 0.8rem;">Reset Demo</button>
                             </div>
                             <div class="pipeline-cards-list">
                                 <div class="workspace-card pipeline-stage" id="card-fetcher">
@@ -320,18 +323,115 @@
                             </div>
                             <div class="workspace-card metrics-card">
                                 <div class="metric-row">
-                                    <span class="metric-lbl">PR Health Score</span>
-                                    <span class="metric-val" id="metric-health">--</span>
+                                    <span class="metric-lbl">Critical Issues</span>
+                                    <span class="metric-val" id="metric-critical">--</span>
                                 </div>
                                 <div class="metric-row">
-                                    <span class="metric-lbl">Decision</span>
-                                    <span class="metric-val" id="metric-decision">Waiting...</span>
+                                    <span class="metric-lbl">Warnings</span>
+                                    <span class="metric-val" id="metric-warnings">--</span>
                                 </div>
                                 <div class="metric-row">
+                                    <span class="metric-lbl">Files Reviewed</span>
+                                    <span class="metric-val" id="metric-files">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Languages</span>
+                                    <span class="metric-val" id="metric-languages">--</span>
+                                </div>
+                                <div class="metric-row" style="margin-top: 12px; border-top: 1px solid #30363d; padding-top: 12px;">
                                     <span class="metric-lbl">Review Time</span>
                                     <span class="metric-val" id="metric-time">--</span>
                                 </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Health Score</span>
+                                    <span class="metric-val" id="metric-health">--</span>
+                                </div>
+                                <div class="metric-row" style="margin-top: 12px;">
+                                    <span class="metric-lbl" style="font-weight: 600;">Decision</span>
+                                    <span class="metric-val" id="metric-decision" style="font-weight: 700;">Waiting...</span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div id="demo-actions-footer" class="hidden" style="width: 100%; text-align: center; margin-top: 2rem; padding: 1.5rem; background: #161b22; border-top: 1px solid #30363d; border-radius: 0 0 8px 8px;">
+                        <button id="reset-demo-btn" class="btn-secondary" style="margin-right: 12px;">Reset Demo</button>
+                        <button id="run-again-btn" class="btn-primary" style="margin-right: 12px;">Run Again</button>
+                        <button id="view-arch-btn" class="btn-secondary">View Architecture</button>
+                    </div>
+                </div>
+
+                <div class="architecture-showcase" id="architecture-section">
+                    <div class="showcase-header">
+                        <h2>How PRism Works</h2>
+                    </div>
+                    
+                    <div class="arch-flow-diagram">
+                        <div class="flow-step"><i data-lucide="github"></i><span>GitHub Pull Request</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="webhook"></i><span>Webhook Trigger</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="server"></i><span>FastAPI Backend</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="git-branch"></i><span>LangGraph Orchestrator</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step highlight-step" style="border-color: #58a6ff; background: rgba(88, 166, 255, 0.05);"><i data-lucide="bot"></i><span style="color: #58a6ff;">Security • Quality • Logic Agents</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="layers"></i><span>Review Aggregation</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="message-square"></i><span>GitHub Review Comments</span></div>
+                        <div class="flow-arrow"><i data-lucide="arrow-down"></i></div>
+                        <div class="flow-step"><i data-lucide="database"></i><span>PostgreSQL + Redis</span></div>
+                    </div>
+
+                    <div class="showcase-header mt-8">
+                        <h2>Technology Stack</h2>
+                    </div>
+                    <div class="tech-stack-container">
+                        <div class="tech-category">
+                            <h3>Backend</h3>
+                            <div class="tech-badges">
+                                <span class="tech-badge">FastAPI</span>
+                                <span class="tech-badge">LangGraph</span>
+                                <span class="tech-badge">SQLAlchemy</span>
+                            </div>
+                        </div>
+                        <div class="tech-category">
+                            <h3>AI</h3>
+                            <div class="tech-badges">
+                                <span class="tech-badge">Groq</span>
+                                <span class="tech-badge">Llama 3.x</span>
+                                <span class="tech-badge">Tree-sitter</span>
+                            </div>
+                        </div>
+                        <div class="tech-category">
+                            <h3>Infrastructure</h3>
+                            <div class="tech-badges">
+                                <span class="tech-badge">PostgreSQL</span>
+                                <span class="tech-badge">Redis</span>
+                                <span class="tech-badge">Docker</span>
+                                <span class="tech-badge">Render</span>
+                                <span class="tech-badge">Neon</span>
+                                <span class="tech-badge">Upstash</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="showcase-header mt-8">
+                        <h2>Project Highlights</h2>
+                    </div>
+                    <div class="highlights-grid">
+                        <div class="workspace-card highlight-card">
+                            <h3>Multi-Agent Architecture</h3>
+                            <p>3 Specialized AI Agents working together using LangGraph.</p>
+                        </div>
+                        <div class="workspace-card highlight-card">
+                            <h3>AST-Based Analysis</h3>
+                            <p>Tree-sitter parses source code before AI analysis for structured reasoning.</p>
+                        </div>
+                        <div class="workspace-card highlight-card">
+                            <h3>Production Deployment</h3>
+                            <p>Dockerized backend deployed with Render, PostgreSQL and Redis.</p>
                         </div>
                     </div>
                 </div>

@@ -410,12 +410,20 @@ function startPipelineAnimation(scenario) {
 
             // Finish demo
             if (event.final_summary) {
-                document.getElementById('metric-health').textContent = '34 / 100';
-                document.getElementById('metric-decision').textContent = 'CHANGES REQUESTED';
-                document.getElementById('metric-decision').style.color = '#f85149';
-                document.getElementById('metric-time').textContent = '8.3 seconds';
+                document.getElementById('metric-critical').textContent = '1';
+                document.getElementById('metric-warnings').textContent = '3';
+                document.getElementById('metric-files').textContent = '3';
+                document.getElementById('metric-languages').textContent = 'Python';
+                document.getElementById('metric-time').textContent = '8.3 sec';
+                document.getElementById('metric-health').textContent = '34/100';
                 
-                document.getElementById('reset-demo-btn').classList.remove('hidden');
+                const decision = document.getElementById('metric-decision');
+                decision.textContent = 'CHANGES REQUESTED';
+                decision.style.color = '#f85149';
+                
+                const footer = document.getElementById('demo-actions-footer');
+                if (footer) footer.classList.remove('hidden');
+                
                 demoEventSource.close();
             }
         };
@@ -446,8 +454,8 @@ function startPipelineAnimation(scenario) {
     }
 
     function resetDemoUI() {
-        const resetBtn = document.getElementById('reset-demo-btn');
-        if (resetBtn) resetBtn.classList.add('hidden');
+        const footer = document.getElementById('demo-actions-footer');
+        if (footer) footer.classList.add('hidden');
         
         document.querySelectorAll('.diff-line').forEach(el => {
             el.classList.remove('highlight-red', 'highlight-yellow');
@@ -483,23 +491,38 @@ function startPipelineAnimation(scenario) {
             `;
         }
 
-        const health = document.getElementById('metric-health');
-        if (health) health.textContent = '--';
+        const metricsToReset = ['critical', 'warnings', 'files', 'languages', 'time', 'health'];
+        metricsToReset.forEach(m => {
+            const el = document.getElementById(`metric-${m}`);
+            if (el) el.textContent = '--';
+        });
         
         const decision = document.getElementById('metric-decision');
         if (decision) {
             decision.textContent = 'Waiting...';
             decision.style.color = '#e6edf3';
         }
-        
-        const time = document.getElementById('metric-time');
-        if (time) time.textContent = '--';
     }
 
+    const startResetAction = () => {
+        startDemoStreaming();
+        // scroll back up to top if user was viewing architecture
+        document.getElementById('view-pipeline').scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const resetBtnEl = document.getElementById('reset-demo-btn');
-    if (resetBtnEl) {
-        resetBtnEl.addEventListener('click', () => {
-            startDemoStreaming();
+    if (resetBtnEl) resetBtnEl.addEventListener('click', startResetAction);
+
+    const runAgainBtnEl = document.getElementById('run-again-btn');
+    if (runAgainBtnEl) runAgainBtnEl.addEventListener('click', startResetAction);
+    
+    const viewArchBtn = document.getElementById('view-arch-btn');
+    if (viewArchBtn) {
+        viewArchBtn.addEventListener('click', () => {
+            const archSection = document.getElementById('architecture-section');
+            if (archSection) {
+                archSection.scrollIntoView({ behavior: 'smooth' });
+            }
         });
     }
 
