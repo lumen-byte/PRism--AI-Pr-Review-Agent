@@ -1,206 +1,171 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150x150.png?text=PRism+Logo" alt="PRism Logo" width="120" height="120">
-  <h1>PRism — Intelligent Pull Request Review Agent</h1>
-  <p><strong>Production-Grade AI Code Review System powered by LangGraph</strong></p>
+  
+# PRism
+**AI-Powered Pull Request Review Agent**
 
-  [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://python.org)
-  [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-  [![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF9900.svg)](https://langchain.com)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-  [![Release](https://img.shields.io/badge/Release-v1.0.0-purple.svg)](RELEASE_NOTES.md)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-FF9900.svg)](https://python.langchain.com/docs/langgraph)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.0-336791.svg?logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-Cache-DC382D.svg?logo=redis)](https://redis.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**[Live Demo](https://pr-agent-production.up.railway.app)** | **[Operations Dashboard](https://pr-agent-production.up.railway.app/dashboard)**
+
+*PRism is a multi-agent system that reviews GitHub pull requests exactly like a senior engineer. It understands architecture, security, and logic.*
+
 </div>
 
-<br />
+---
 
-PRism is a production-ready, asynchronous Backend AI system that automatically reviews GitHub Pull Requests. It orchestrates multiple specialized AI agents (Security, Quality, and Logic) in parallel to analyze your code, generate context-aware critiques, and natively publish actionable comments directly to your GitHub Pull Requests.
+## 🚀 Why PRism?
+Modern engineering teams spend thousands of hours reviewing pull requests. Simple linters catch syntax errors, but they miss logical flaws, security vulnerabilities, and architectural regressions. 
 
-Built for scale, PRism leverages a highly optimized technology stack typically found at enterprise tech companies.
+**PRism is different.** It leverages **LangGraph** to coordinate a team of specialized AI agents. Instead of running a single prompt, PRism builds an execution graph where a Security Agent, a Quality Agent, and a Logic Agent work in parallel to analyze the codebase, before an Orchestrator synthesizes their findings into concrete, actionable GitHub review comments.
+
+## ✨ Features
+
+- **Multi-Agent Orchestration**: Uses LangGraph to fan-out tasks to specialized AI agents and fan-in the results.
+- **AST Semantic Analysis**: Employs `tree-sitter` for deep, scope-aware structural understanding of code changes, far beyond simple regex matching.
+- **Native GitHub Integration**: Automatically posts inline review comments and approval/request-changes decisions via GitHub Webhooks.
+- **Live Interactive Demo**: An embedded recruiter demo workspace to visualize the pipeline execution in real-time using Server-Sent Events (SSE).
+- **Operations Dashboard**: A production-grade telemetry dashboard tracking system health, agent execution times, and review statistics.
+- **High-Performance Infrastructure**: Built on async Python (FastAPI, asyncpg), utilizing Redis for distributed locking and PostgreSQL for persistent review history.
 
 ---
 
-## 📸 Dashboard Showcase
-
-> *Interactive Metrics, Agent Diagnostics, and Review Drill-downs.*
-
-![Dashboard Placeholder](https://via.placeholder.com/800x400.png?text=Interactive+Dashboard+Screenshot)
-
----
-
-## ⚡ Core Features
-
-- **Multi-Agent Orchestration**: LangGraph coordinates Security, Quality, and Logic agents.
-- **AST Code Parsing**: Deep semantic understanding via `tree-sitter` (Python, TS, JS).
-- **Enterprise Architecture**: FastAPI (async), PostgreSQL (asyncpg), Redis caching.
-- **GitHub Native**: Secure Webhooks (`X-Hub-Signature-256`) and inline review publishing.
-- **Demo Mode**: One-click local testing without requiring a live GitHub App setup.
-- **Observability**: Prometheus metrics, JSON structured logging, and robust CI/CD.
-
----
-
-## 🗺️ System Architecture
-
-<details>
-<summary><b>1. High-Level Architecture Diagram</b></summary>
+## 🧠 System Architecture
 
 ```mermaid
-graph TD
-    A[GitHub Pull Request] -->|Webhook| B(FastAPI Gateway)
-    B -->|Enqueues Task| C{Redis Cache}
-    C -->|Background Worker| D[Diff Analyzer Node]
+flowchart TD
+    GH[GitHub Pull Request] -->|Webhook| FA[FastAPI Backend]
     
-    D -->|Parallel Execution| E[Security Agent]
-    D -->|Parallel Execution| F[Quality Agent]
-    D -->|Parallel Execution| G[Logic Agent]
+    subgraph Orchestration [LangGraph Orchestrator]
+        FA --> LG{State Graph Router}
+        LG -->|Parallel| SA(Security Agent)
+        LG -->|Parallel| QA(Quality Agent)
+        LG -->|Parallel| LA(Logic Agent)
+        
+        SA --> AG[Review Aggregator]
+        QA --> AG
+        LA --> AG
+    end
     
-    E --> H[Review Orchestrator]
-    F --> H
-    G --> H
-    
-    H -->|Saves to DB| I[(PostgreSQL)]
-    H -->|Publishes Inline Comments| J[GitHub API]
+    AG -->|Publish| GHC[GitHub Comments]
+    AG -->|Persist| DB[(PostgreSQL)]
+    LG -.->|Cache & Locks| RD[(Redis)]
 ```
-
-</details>
-
-<details>
-<summary><b>2. Sequence Diagram (E2E Flow)</b></summary>
-
-```mermaid
-sequenceDiagram
-    actor Developer
-    participant GitHub
-    participant FastAPI
-    participant LangGraph
-    participant GroqLLM
-    participant PostgreSQL
-
-    Developer->>GitHub: Opens PR
-    GitHub->>FastAPI: POST /api/v1/webhook (HMAC verified)
-    FastAPI->>LangGraph: Initialize ReviewState
-    LangGraph->>GitHub: Fetch Diff & AST Source
-    LangGraph->>GroqLLM: Parallel execution (Quality, Logic, Security)
-    GroqLLM-->>LangGraph: Structured JSON Findings
-    LangGraph->>PostgreSQL: Save Merged Review & Scores
-    LangGraph->>GitHub: Publish Inline Review
-    GitHub-->>Developer: Notifies Developer
-```
-
-</details>
-
-<details>
-<summary><b>3. LangGraph Agent Flow</b></summary>
-
-```mermaid
-stateDiagram-v2
-    [*] --> DiffAnalyzer
-    DiffAnalyzer --> SecurityAgent
-    DiffAnalyzer --> QualityAgent
-    DiffAnalyzer --> LogicAgent
-    SecurityAgent --> Orchestrator
-    QualityAgent --> Orchestrator
-    LogicAgent --> Orchestrator
-    Orchestrator --> GitHubPublisher
-    GitHubPublisher --> [*]
-```
-
-</details>
-
-<details>
-<summary><b>4. Database ER Diagram</b></summary>
-
-```mermaid
-erDiagram
-    USERS ||--o{ REVIEWS : "owns"
-    REVIEWS ||--o{ ISSUES : "contains"
-    
-    USERS {
-        int id PK
-        string email
-        string hashed_password
-    }
-    
-    REVIEWS {
-        int id PK
-        int user_id FK
-        int pr_number
-        string repo
-        string decision
-        int health_score
-    }
-    
-    ISSUES {
-        int id PK
-        int review_id FK
-        string category
-        string severity
-        string description
-    }
-```
-
-</details>
-
-<details>
-<summary><b>5. Folder Structure</b></summary>
-
-```mermaid
-graph LR
-    Root[PRism Repository] --> App[app/]
-    App --> Agents[agents/ (LangGraph)]
-    App --> API[api/ (FastAPI Routers)]
-    App --> Core[core/ (GitHub & Parsers)]
-    App --> DB[db/ (SQLAlchemy)]
-    App --> Services[services/ (Review & AI)]
-    
-    Root --> Docs[docs/]
-    Root --> Tests[tests/]
-    Root --> Scripts[scripts/]
-```
-
-</details>
 
 ---
 
-## 🚀 Quickstart (Recruiter Guide)
+## 🛠 Technology Stack
 
-We value your time! PRism can be booted locally in **Demo Mode** under 2 minutes. No GitHub setup is required to see the AI in action.
+### **Backend**
+- **FastAPI**: High-performance async API framework.
+- **SQLAlchemy 2.0 (asyncpg)**: Fully asynchronous ORM for database operations.
+- **Alembic**: Database migrations and schema management.
+- **Pydantic**: Strict data validation and settings management.
 
-### 1. Clone & Build
-```bash
-git clone https://github.com/prism-ai/prism.git
-cd prism
-cp .env.example .env
-docker-compose up --build -d
-```
+### **AI & NLP**
+- **LangGraph**: Directed Acyclic Graph (DAG) for stateful multi-agent orchestration.
+- **Groq / Llama 3**: Sub-second LLM inference for agent reasoning.
+- **Tree-sitter**: Concrete Syntax Tree parsing for Python and TypeScript analysis.
 
-### 2. View the Dashboard
-Navigate to [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html).
+### **Infrastructure**
+- **PostgreSQL**: Primary transactional database (deployed on Neon).
+- **Redis**: Distributed task queue and concurrency locking (deployed on Upstash).
+- **Docker**: Containerized deployment environments.
+- **Render**: Production web service hosting.
 
-### 3. Trigger an AI Review (Demo Mode)
-To simulate a Pull Request without connecting GitHub, simply hit the demo endpoint. The backend will parse mock Python files, spin up the AI agents in parallel, and store the results.
-
-```bash
-curl -X POST http://localhost:8000/api/v1/demo/trigger
-```
-
-Refresh your dashboard to see the real-time AI critique!
-
-![Demo GIF Placeholder](https://via.placeholder.com/800x400.png?text=Demo+CLI+GIF)
+### **Frontend (Dashboard)**
+- **Vanilla JS**: Zero-dependency, lightweight, high-performance DOM manipulation.
+- **Chart.js**: Telemetry and metrics visualization.
+- **Tailwind-inspired CSS**: Custom glassmorphism UI system.
 
 ---
 
-## 📖 Deep-Dive Documentation
+## 📸 System Showcase
 
-For engineers looking to contribute or understand the internals:
+### 1. Recruiter Demo Landing Page
+*(A clean, professional entry point into the PRism ecosystem.)*
+<br>
+![Landing Page Placeholder](https://via.placeholder.com/800x400/0d1117/58a6ff?text=Landing+Page+Screenshot)
 
-- [Architecture Overview](docs/architecture.md)
-- [Database & Migrations](docs/database.md)
-- [LangGraph Orchestration](docs/langgraph.md)
-- [Security Guidelines](docs/security.md)
-- [GitHub Webhooks Setup](docs/github-webhook.md)
-- [Production Deployment](docs/deployment.md)
+### 2. Live Pipeline Visualizer
+*(Real-time Server-Sent Events showing the LangGraph execution flow.)*
+<br>
+![Pipeline Placeholder](https://via.placeholder.com/800x400/0d1117/3fb950?text=Live+Pipeline+Execution)
+
+### 3. Operations Dashboard
+*(Production telemetry, agent performance tracking, and system health.)*
+<br>
+![Dashboard Placeholder](https://via.placeholder.com/800x400/0d1117/8b949e?text=Operations+Dashboard)
 
 ---
 
-## ⚖️ License
+## 📂 Project Structure
 
-Distributed under the MIT License. See `LICENSE` for more information.
+```text
+├── app/
+│   ├── api/            # FastAPI route handlers (webhooks, dashboard, demo)
+│   ├── core/           # Config, security, exception handling, logging
+│   ├── db/             # SQLAlchemy models, sessions, and async pg setup
+│   ├── agents/         # LangGraph Nodes: Security, Quality, Logic, Orchestrator
+│   └── services/       # GitHub API integration, AST parsing
+├── static/             # Vanilla JS Frontend (app.js, style.css, index.html)
+├── alembic/            # Database migrations
+├── docker-compose.yml  # Local development stack (Postgres + Redis)
+├── Dockerfile          # Multi-stage production image
+└── pyproject.toml      # Project dependencies
+```
+
+---
+
+## 💻 Running Locally
+
+### Prerequisites
+- Docker & Docker Compose
+- Python 3.12+
+- A Groq API Key
+- A GitHub Fine-Grained Personal Access Token
+
+### Quick Start (Docker)
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/prism-ai.git
+   cd prism-ai
+   ```
+
+2. **Configure Environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your GROQ_API_KEY and GITHUB_TOKEN
+   ```
+
+3. **Start the Stack:**
+   ```bash
+   docker-compose up --build
+   ```
+
+4. **Access the Dashboard:**
+   Navigate to `http://localhost:8000/dashboard` in your browser.
+
+---
+
+## ☁️ Deployment Architecture
+
+PRism is designed for cloud-native deployment:
+- **Render**: Hosts the FastAPI Docker container, utilizing background worker queues.
+- **Neon Serverless Postgres**: Handles persistent review data and metrics with zero-downtime scaling.
+- **Upstash Redis**: Manages distributed locks to ensure Webhook concurrency doesn't trigger duplicate agent runs for the same PR.
+
+---
+
+## 🛣 Future Improvements
+
+- **Jira/Linear Integration**: Automatically link generated review comments to issue trackers.
+- **Custom Agent Prompts**: Allow organizations to define specific "Engineering Guidelines" injected directly into the Quality Agent's state graph.
+- **Vector Search (RAG)**: Index entire repositories to allow the Logic Agent to detect regressions in deeply decoupled microservices.
+
+---
+*Built with ❤️ for modern engineering teams.*
