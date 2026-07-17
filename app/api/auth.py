@@ -111,7 +111,16 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)):
     async with httpx.AsyncClient() as client:
         response = await client.post(token_url, data=data)
         if response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to retrieve token from Google")
+            error_detail = "Failed to retrieve token from Google"
+            try:
+                err_json = response.json()
+                if "error_description" in err_json:
+                    error_detail = f"Google Error: {err_json['error_description']}"
+                elif "error" in err_json:
+                    error_detail = f"Google Error: {err_json['error']}"
+            except Exception:
+                pass
+            raise HTTPException(status_code=400, detail=error_detail)
         
         token_data = response.json()
         access_token = token_data.get("access_token")
