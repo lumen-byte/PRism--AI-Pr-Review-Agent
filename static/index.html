@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRism - Enterprise AI Review Agent</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 </head>
 <body>
     <!-- Login Overlay -->
@@ -222,173 +225,101 @@
 
             <!-- Live Pipeline View -->
             <div id="view-pipeline" class="view hidden">
-                <div class="glass-card pipeline-header-card">
-                    <div class="pipeline-header-info">
-                        <div>
-                            <span class="scenario-pill" id="pipe-active-scenario">Scenario: Idle</span>
-                            <h2 id="pipe-active-pr">No Pipeline Execution Active</h2>
+                <div class="demo-workspace">
+                    <div class="workspace-left">
+                        <div class="workspace-header">
+                            <h2>Sample Pull Request</h2>
+                            <p class="subtitle">Python Backend Changes</p>
                         </div>
-                        <div class="pipeline-timer">
-                            <i data-lucide="clock"></i>
-                            <span id="pipe-elapsed-time">Elapsed: 0.00s</span>
+                        <div class="diff-container">
+                            <!-- File: config.py -->
+                            <div class="diff-file">
+                                <div class="diff-header">config.py</div>
+                                <pre><code class="language-python"><div class="diff-line removed"><span class="diff-prefix">-</span> api_key = "sk-proj-abc123def456ghi789"</div><div class="diff-line added"><span class="diff-prefix">+</span> api_key = os.getenv("OPENAI_API_KEY")</div></code></pre>
+                            </div>
+                            <!-- File: payments.py -->
+                            <div class="diff-file">
+                                <div class="diff-header">payments.py</div>
+                                <pre><code class="language-python"><div class="diff-line added"><span class="diff-prefix">+</span> import datetime</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> import os</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> from typing import Optional</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span> def process_payment(</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     user,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     amount,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     currency,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     method,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     description,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     metadata,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     retry_count,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     timeout,</div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     callback</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> ):</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line added"><span class="diff-prefix">+</span>   account = user.account</div><div class="diff-line added"><span class="diff-prefix">+</span>   balance = account.balance</div><div class="diff-line unchanged"><span class="diff-prefix"> </span> </div><div class="diff-line unchanged"><span class="diff-prefix"> </span>     ...</div></code></pre>
+                            </div>
+                            <!-- File: utils.py -->
+                            <div class="diff-file">
+                                <div class="diff-header">utils.py</div>
+                                <pre><code class="language-python"><div class="diff-line added"><span class="diff-prefix">+</span> def validate_input(data):</div><div class="diff-line added"><span class="diff-prefix">+</span>     if data == None:</div><div class="diff-line added"><span class="diff-prefix">+</span>         return False</div><div class="diff-line added"><span class="diff-prefix">+</span>     return True</div></code></pre>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="pipeline-progress-bar-container">
-                        <div class="pipeline-progress-bar" id="pipe-progress-bar" style="width: 0%;"></div>
-                    </div>
-                    <div class="pipeline-status-text" id="pipe-status-text">Select a scenario and click "Run AI Demo" to visualize live LangGraph orchestration.</div>
-                </div>
-
-                <!-- Animated Node Canvas Diagram -->
-                <div class="glass-card pipeline-diagram-container">
-                    <h3>LangGraph Multi-Agent Workflow Diagram</h3>
-                    <div class="pipeline-track">
-                        <div class="pipe-node" id="node-webhook">
-                            <div class="node-icon"><i data-lucide="webhook"></i></div>
-                            <span class="node-label">GitHub Webhook</span>
-                            <span class="node-badge" id="badge-webhook">IDLE</span>
-                        </div>
-                        <div class="pipe-connector"></div>
-
-                        <div class="pipe-node" id="node-diff">
-                            <div class="node-icon"><i data-lucide="file-diff"></i></div>
-                            <span class="node-label">Diff Analyzer</span>
-                            <span class="node-badge" id="badge-diff">IDLE</span>
-                        </div>
-                        <div class="pipe-connector"></div>
-
-                        <div class="pipe-node" id="node-treesitter">
-                            <div class="node-icon"><i data-lucide="code"></i></div>
-                            <span class="node-label">Tree-sitter AST</span>
-                            <span class="node-badge" id="badge-treesitter">IDLE</span>
-                        </div>
-                        <div class="pipe-connector"></div>
-
-                        <!-- Parallel Fan-Out Group -->
-                        <div class="pipe-parallel-group">
-                            <div class="pipe-node parallel" id="node-security">
-                                <div class="node-icon red"><i data-lucide="shield-alert"></i></div>
-                                <span class="node-label">Security Agent</span>
-                                <span class="node-badge" id="badge-security">IDLE</span>
+                    <div class="workspace-right">
+                        <div class="workspace-main">
+                            <div class="workspace-header">
+                                <h2>AI Review Pipeline</h2>
                             </div>
-                            <div class="pipe-node parallel" id="node-quality">
-                                <div class="node-icon purple"><i data-lucide="sparkles"></i></div>
-                                <span class="node-label">Quality Agent</span>
-                                <span class="node-badge" id="badge-quality">IDLE</span>
+                            <div class="pipeline-cards-list">
+                                <div class="workspace-card pipeline-stage">
+                                    <div class="card-head">
+                                        <h3>PR Fetcher</h3>
+                                        <span class="status-badge waiting">Waiting</span>
+                                    </div>
+                                    <p>Fetches GitHub PR and parses repository metadata.</p>
+                                </div>
+                                <div class="workspace-card pipeline-stage">
+                                    <div class="card-head">
+                                        <h3>Security Agent</h3>
+                                        <span class="status-badge waiting">Waiting</span>
+                                    </div>
+                                    <p>Searches for vulnerabilities and secrets.</p>
+                                </div>
+                                <div class="workspace-card pipeline-stage">
+                                    <div class="card-head">
+                                        <h3>Code Quality Agent</h3>
+                                        <span class="status-badge waiting">Waiting</span>
+                                    </div>
+                                    <p>Checks complexity, style and maintainability.</p>
+                                </div>
+                                <div class="workspace-card pipeline-stage">
+                                    <div class="card-head">
+                                        <h3>Logic Agent</h3>
+                                        <span class="status-badge waiting">Waiting</span>
+                                    </div>
+                                    <p>Finds logical errors and risky code paths.</p>
+                                </div>
+                                <div class="workspace-card pipeline-stage">
+                                    <div class="card-head">
+                                        <h3>Review Orchestrator</h3>
+                                        <span class="status-badge waiting">Waiting</span>
+                                    </div>
+                                    <p>Combines findings and prepares GitHub review.</p>
+                                </div>
                             </div>
-                            <div class="pipe-node parallel" id="node-logic">
-                                <div class="node-icon green"><i data-lucide="cpu"></i></div>
-                                <span class="node-label">Logic Agent</span>
-                                <span class="node-badge" id="badge-logic">IDLE</span>
+                            
+                            <div class="workspace-header mt-4">
+                                <h2>GitHub Review Comments</h2>
+                            </div>
+                            <div class="workspace-card placeholder-card">
+                                <p>No review generated yet.</p>
                             </div>
                         </div>
-
-                        <div class="pipe-connector"></div>
-
-                        <div class="pipe-node" id="node-orchestrator">
-                            <div class="node-icon"><i data-lucide="layers"></i></div>
-                            <span class="node-label">Review Orchestrator</span>
-                            <span class="node-badge" id="badge-orchestrator">IDLE</span>
-                        </div>
-                        <div class="pipe-connector"></div>
-
-                        <div class="pipe-node" id="node-db">
-                            <div class="node-icon"><i data-lucide="database"></i></div>
-                            <span class="node-label">PostgreSQL DB</span>
-                            <span class="node-badge" id="badge-db">IDLE</span>
-                        </div>
-                        <div class="pipe-connector"></div>
-
-                        <div class="pipe-node" id="node-publisher">
-                            <div class="node-icon"><i data-lucide="git-pull-request"></i></div>
-                            <span class="node-label">GitHub Review</span>
-                            <span class="node-badge" id="badge-publisher">IDLE</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Agent Status Cards -->
-                <h3 class="section-title">Agent Diagnostics & Status Telemetry</h3>
-                <div class="agent-cards-grid">
-                    <div class="glass-card agent-status-card" id="agent-card-security">
-                        <div class="agent-card-header">
-                            <div class="agent-title">
-                                <i data-lucide="shield-alert" class="icon-red"></i>
-                                <span>Security Agent</span>
+                        
+                        <div class="workspace-sidebar">
+                            <div class="workspace-header">
+                                <h2>Final Review</h2>
                             </div>
-                            <span class="status-tag idle" id="agent-tag-security">IDLE</span>
-                        </div>
-                        <div class="agent-card-body">
-                            <div class="agent-metric"><span>Latency:</span> <strong id="agent-lat-security">-</strong></div>
-                            <div class="agent-metric"><span>Findings:</span> <strong id="agent-find-security">-</strong></div>
-                            <div class="agent-metric"><span>Errors:</span> <strong id="agent-err-security">0</strong></div>
-                            <div class="agent-desc">Scans for SQL injection, secret leaks, and security risks via AST tokens.</div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card agent-status-card" id="agent-card-quality">
-                        <div class="agent-card-header">
-                            <div class="agent-title">
-                                <i data-lucide="sparkles" class="icon-purple"></i>
-                                <span>Quality Agent</span>
+                            <div class="workspace-card metrics-card">
+                                <div class="metric-row">
+                                    <span class="metric-lbl">PR Health Score</span>
+                                    <span class="metric-val">--</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Decision</span>
+                                    <span class="metric-val">Waiting...</span>
+                                </div>
+                                <div class="metric-row">
+                                    <span class="metric-lbl">Review Time</span>
+                                    <span class="metric-val">--</span>
+                                </div>
                             </div>
-                            <span class="status-tag idle" id="agent-tag-quality">IDLE</span>
                         </div>
-                        <div class="agent-card-body">
-                            <div class="agent-metric"><span>Latency:</span> <strong id="agent-lat-quality">-</strong></div>
-                            <div class="agent-metric"><span>Findings:</span> <strong id="agent-find-quality">-</strong></div>
-                            <div class="agent-metric"><span>Errors:</span> <strong id="agent-err-quality">0</strong></div>
-                            <div class="agent-desc">Evaluates cyclomatic complexity, code smells, and design anti-patterns.</div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card agent-status-card" id="agent-card-logic">
-                        <div class="agent-card-header">
-                            <div class="agent-title">
-                                <i data-lucide="cpu" class="icon-green"></i>
-                                <span>Logic Agent</span>
-                            </div>
-                            <span class="status-tag idle" id="agent-tag-logic">IDLE</span>
-                        </div>
-                        <div class="agent-card-body">
-                            <div class="agent-metric"><span>Latency:</span> <strong id="agent-lat-logic">-</strong></div>
-                            <div class="agent-metric"><span>Findings:</span> <strong id="agent-find-logic">-</strong></div>
-                            <div class="agent-metric"><span>Errors:</span> <strong id="agent-err-logic">0</strong></div>
-                            <div class="agent-desc">Checks for algorithmic edge cases, zero-division, and off-by-one errors.</div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card agent-status-card" id="agent-card-diff">
-                        <div class="agent-card-header">
-                            <div class="agent-title">
-                                <i data-lucide="file-diff" class="icon-blue"></i>
-                                <span>AST Diff Parser</span>
-                            </div>
-                            <span class="status-tag idle" id="agent-tag-diff">IDLE</span>
-                        </div>
-                        <div class="agent-card-body">
-                            <div class="agent-metric"><span>Latency:</span> <strong id="agent-lat-diff">-</strong></div>
-                            <div class="agent-metric"><span>Files Analyzed:</span> <strong id="agent-find-diff">-</strong></div>
-                            <div class="agent-metric"><span>Errors:</span> <strong id="agent-err-diff">0</strong></div>
-                            <div class="agent-desc">Uses Tree-sitter semantic grammars to parse Python and TypeScript AST scopes.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Log Output Stream -->
-                <div class="glass-card terminal-container">
-                    <div class="terminal-header">
-                        <div class="terminal-dots">
-                            <span class="dot red"></span>
-                            <span class="dot yellow"></span>
-                            <span class="dot green"></span>
-                        </div>
-                        <span class="terminal-title">Live Execution Console</span>
-                        <button id="clear-log-btn" class="btn-text-sm">Clear</button>
-                    </div>
-                    <div class="terminal-body" id="live-terminal-stream">
-                        <div class="log-line">[SYSTEM] Waiting for execution trigger... Select a scenario and click "Run AI Demo".</div>
                     </div>
                 </div>
             </div>

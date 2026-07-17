@@ -1067,3 +1067,229 @@ h1, h2, h3 {
     }
 }
 
+/* Demo Workspace Layout */
+.demo-workspace {
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - 80px); /* adjust based on topbar */
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: #0d1117;
+    color: #e6edf3;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.workspace-left {
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: #0d1117;
+}
+
+.workspace-right {
+    flex: 0 0 calc(60% - 1.5rem);
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+}
+
+.workspace-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.workspace-sidebar {
+    flex: 0 0 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+.workspace-header .subtitle {
+    font-size: 0.85rem;
+    color: #8b949e;
+    margin: 0 0 1rem 0;
+}
+
+.mt-4 { margin-top: 1.5rem; }
+
+/* Code Diff */
+.diff-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.diff-file {
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #0d1117;
+    overflow: hidden;
+}
+
+.diff-header {
+    background: #161b22;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    border-bottom: 1px solid #30363d;
+    color: #e6edf3;
+}
+
+.diff-file pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.diff-file code {
+    display: block;
+    padding: 0;
+}
+
+.diff-line {
+    padding: 0 16px;
+    display: flex;
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.diff-prefix {
+    user-select: none;
+    width: 20px;
+    display: inline-block;
+    color: #8b949e;
+}
+
+.diff-line.added {
+    background-color: rgba(46, 160, 67, 0.15);
+}
+
+.diff-line.removed {
+    background-color: rgba(248, 81, 73, 0.15);
+}
+
+/* Cards */
+.workspace-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(1, 4, 9, 0.3);
+}
+
+.pipeline-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.pipeline-stage {
+    margin-bottom: 0;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.card-head h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #e6edf3;
+    font-weight: 600;
+}
+
+.pipeline-stage p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #8b949e;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.status-badge.waiting {
+    background: rgba(139, 148, 158, 0.15);
+    color: #8b949e;
+    border: 1px solid rgba(139, 148, 158, 0.2);
+}
+
+.placeholder-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    color: #8b949e;
+    font-size: 0.9rem;
+    border-style: dashed;
+}
+
+.metrics-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.metric-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.metric-lbl {
+    font-size: 0.8rem;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-val {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+/* Responsiveness */
+@media (max-width: 1024px) {
+    .demo-workspace {
+        flex-direction: column;
+        overflow-y: auto;
+        height: auto;
+    }
+    .workspace-left, .workspace-right {
+        flex: auto;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .workspace-right {
+        flex-direction: column;
+    }
+    .workspace-sidebar {
+        flex: auto;
+        width: 100%;
+    }
+}
