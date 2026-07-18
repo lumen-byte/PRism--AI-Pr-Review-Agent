@@ -680,7 +680,7 @@ function startPipelineAnimation(scenario) {
             }
         });
     }
-
+}
 
 // --- Explorer & GitHub Render Preview ---
 searchRepo.addEventListener('input', debounce(loadExplorer, 500));
