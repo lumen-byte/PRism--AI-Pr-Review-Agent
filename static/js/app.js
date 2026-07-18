@@ -1,23 +1,6 @@
 lucide.createIcons();
 
 // --- Auth & State ---
-// Check if a demo token was passed via URL hash fragment (from /api/v1/auth/demo-access)
-(function() {
-    if (window.location.hash && window.location.hash.includes('demo-token=')) {
-        try {
-            const hash = window.location.hash.slice(1); // remove the '#'
-            const params = new URLSearchParams(hash);
-            const demoToken = params.get('demo-token');
-            if (demoToken) {
-                localStorage.setItem('prism_token', demoToken);
-                // Clean the URL so token doesn't appear in browser history/address bar
-                window.history.replaceState({}, document.title, '/dashboard');
-            }
-        } catch (e) {
-            console.warn('Failed to parse demo token from hash:', e);
-        }
-    }
-})();
 
 let authToken = localStorage.getItem('prism_token');
 let currentPage = 1;

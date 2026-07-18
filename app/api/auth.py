@@ -54,24 +54,15 @@ async def login(
     }
 
 
-@router.get("/demo-access", response_class=HTMLResponse)
-async def demo_access(db: AsyncSession = Depends(get_db)):
-    """One-click recruiter demo access endpoint.
+@router.get("/demo-access")
+async def demo_access():
+    """Redirect to the dashboard with the demo flag.
 
-    Generates a short-lived JWT for the admin user and embeds it in the
-    dashboard URL hash fragment. The client-side JS reads the hash on load,
-    stores it in localStorage, and cleans the URL — no extra redirect needed.
+    The /dashboard endpoint handles server-side token injection when
+    the ?demo=1 parameter is present, eliminating all client-side race
+    conditions.
     """
-    result = await db.execute(select(User).where(User.username == "admin"))
-    admin = result.scalar_one_or_none()
-    if not admin:
-        return HTMLResponse(
-            content="<h1 style='font-family:sans-serif;background:#0f1117;color:#f85149;display:flex;align-items:center;justify-content:center;height:100vh;margin:0'>Demo user not found. Contact support.</h1>",
-            status_code=404,
-        )
-
-    access_token = create_access_token(subject=admin.username, role=admin.role.name)
-    return RedirectResponse(url=f"/dashboard#demo-token={access_token}", status_code=302)
+    return RedirectResponse(url="/dashboard?demo=1", status_code=302)
 
 
 @router.post("/refresh", response_model=RefreshResponse)
