@@ -54,7 +54,14 @@ function showToast(message, type = 'error') {
 
 async function apiFetch(endpoint, options = {}) {
     try {
-        const res = await apiFetch(endpoint, options);
+        // Merge default headers with provided options
+        const fetchOptions = { ...options };
+        fetchOptions.headers = {
+            ...HEADERS(),
+            ...(options.headers || {})
+        };
+        
+        const res = await fetch(endpoint, fetchOptions);
         if (res.status === 401) {
             logoutBtn.click();
             throw new Error("Unauthorized");
