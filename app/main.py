@@ -87,10 +87,13 @@ async def read_dashboard(
                 token = create_access_token(subject=admin.username, role=admin.role.name)
                 inject = (
                     f'<script>'
+                    f'alert("Token injected successfully! Token starts with: {token[:10]}...");'
                     f'localStorage.setItem("prism_token","{token}");'
                     f'</script>'
                 )
-                # Inject token script right before </head> so it runs before app.js
+                html = html.replace("</head>", inject + "</head>", 1)
+            else:
+                inject = "<script>alert('Demo user NOT FOUND in database!');</script>"
                 html = html.replace("</head>", inject + "</head>", 1)
         except Exception as e:
             import logging
