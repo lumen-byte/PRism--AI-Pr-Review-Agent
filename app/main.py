@@ -92,8 +92,15 @@ async def read_dashboard(
                 )
                 # Inject token script right before </head> so it runs before app.js
                 html = html.replace("</head>", inject + "</head>", 1)
-        except Exception:
-            pass  # Fall through to normal unauthenticated load
+        except Exception as e:
+            import logging
+            logging.error(f"Demo injection failed: {e}")
+            import traceback
+            tb = traceback.format_exc()
+            return HTMLResponse(
+                content=f"<div style='background:red;color:white;padding:20px;font-family:monospace'><h3>Demo Injection Failed</h3><pre>{tb}</pre></div>",
+                status_code=500
+            )
 
     return HTMLResponse(content=html)
 
